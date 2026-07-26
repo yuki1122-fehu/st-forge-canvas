@@ -1,0 +1,3228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Novel Draw</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     样式
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-input: rgba(0, 0, 0, 0.25);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-focus: rgba(212, 165, 116, 0.5);
+    --accent: #d4a574;
+    --accent-soft: rgba(212, 165, 116, 0.15);
+    --success: #3fb950;
+    --danger: #f85149;
+    --warning: #d29922;
+}
+html, body { height: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+}
+.app-container { display: flex; flex-direction: column; min-height: 100vh; }
+.app-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.app-body { display: flex; flex: 1; min-height: 0; }
+.app-sidebar {
+    width: 200px; min-width: 200px; background: var(--bg-secondary);
+    border-right: 1px solid var(--border); padding: 16px 8px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.app-main { flex: 1; padding: 24px; overflow-y: auto; }
+.header-logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.header-logo i { color: var(--accent); }
+.header-badge {
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 12px; font-size: 11px; color: var(--text-muted);
+}
+.header-badge.on { color: var(--success); border-color: rgba(63, 185, 80, 0.3); }
+.header-badge i { font-size: 6px; }
+.header-spacer { flex: 1; min-width: 10px; }
+.header-mode {
+    display: flex; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: 16px; padding: 2px;
+}
+.header-toggles { display: flex; gap: 6px; margin-right: 8px; }
+.header-toggle {
+    display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+    background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px;
+    font-size: 11px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.header-toggle input { accent-color: var(--accent); }
+.header-mode button {
+    padding: 6px 14px; border: none; border-radius: 14px;
+    background: transparent; color: var(--text-secondary);
+    font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.header-mode button.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.header-close {
+    width: 36px; height: 36px; min-width: 36px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: transparent; color: var(--text-secondary);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.header-close:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.header-credit {
+    font-size: 11px; color: var(--text-muted); opacity: 0.5;
+    margin-left: 6px; letter-spacing: 0.02em; font-style: italic;
+    transition: opacity 0.2s; white-space: nowrap;
+}
+.header-credit:hover { opacity: 0.9; }
+.credit-author {
+    font-style: normal;
+    color: var(--text-secondary);
+    transition: color 0.15s, opacity 0.15s;
+    cursor: default;
+}
+.credit-author:hover {
+    color: var(--accent);
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(212, 165, 116, 0.5);
+}
+.nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-radius: 8px; color: var(--text-secondary); cursor: pointer;
+    transition: all 0.15s; font-size: 13px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.nav-item i { width: 18px; text-align: center; }
+.nav-divider { height: 1px; background: var(--border); margin: 8px 0; }
+.view { display: none; max-width: 800px; margin: 0 auto; }
+.view.active { display: block; animation: viewIn 0.2s ease; }
+.view.wide { max-width: 1200px; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+.view-header { margin-bottom: 20px; }
+.view-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.view-desc { font-size: 13px; color: var(--text-secondary); }
+.card {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+}
+.card-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group { margin-bottom: 16px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+.form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.input {
+    width: 100%; padding: 10px 12px; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-primary); font-size: 13px; transition: border-color 0.15s;
+}
+.input:focus { outline: none; border-color: var(--border-focus); }
+.input::placeholder { color: var(--text-muted); }
+textarea.input { min-height: 80px; resize: vertical; font-family: inherit; }
+select.input { cursor: pointer; }
+.input-row { display: flex; gap: 8px; }
+.input-row .input { flex: 1; min-width: 0; }
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px; min-height: 40px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary);
+    font-size: 13px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn:hover { background: rgba(255,255,255,0.08); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+.btn-primary:hover { background: #e5b685; }
+.btn-danger { color: var(--danger); border-color: rgba(248, 81, 73, 0.3); }
+.btn-danger:hover { background: rgba(248, 81, 73, 0.1); }
+.btn-icon { width: 40px; padding: 0; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-sm { padding: 6px 10px; min-height: 32px; font-size: 12px; }
+.btn.saving { pointer-events: none; opacity: 0.7; }
+.btn.save-success { background: var(--success) !important; border-color: var(--success) !important; color: #fff !important; pointer-events: none; }
+.btn.save-success i { animation: checkBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.btn.save-failed { background: var(--danger) !important; border-color: var(--danger) !important; color: #fff !important; pointer-events: none; }
+.btn.save-failed i { animation: shakeFail 0.4s ease; }
+@keyframes checkBounce { 0% { transform: scale(0) rotate(-45deg); } 50% { transform: scale(1.3) rotate(0deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes shakeFail { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.preset-bar {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.preset-bar select { flex: 1; min-width: 120px; max-width: 200px; }
+.action-status-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px;
+}
+.action-status-row .btn-group { margin-top: 0 !important; }
+.char-management-layout {
+    display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+    gap: 16px; align-items: start;
+}
+.char-management-sidebar {
+    display: flex; flex-direction: column; gap: 16px;
+    position: sticky; top: 0; align-self: start;
+}
+.char-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.char-summary-item {
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 12px;
+}
+.char-summary-label { font-size: 11px; color: var(--text-secondary); }
+.char-summary-value { font-size: 24px; font-weight: 700; margin-top: 4px; color: var(--text-primary); }
+.char-summary-value.accent { color: var(--accent); }
+.char-filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.char-filter-summary {
+    margin-top: 12px; font-size: 12px; color: var(--text-secondary);
+    padding: 10px 12px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border);
+}
+.char-list-card { min-height: 520px; }
+.char-list-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 16px;
+}
+.char-list-card-header .card-title { margin-bottom: 0; }
+.char-list-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 84px; padding: 8px 12px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600;
+}
+.char-list-body { display: flex; flex-direction: column; gap: 12px; }
+.char-grid { display: flex; flex-direction: column; gap: 0; }
+.char-grid:empty { display: none; }
+.char-empty.filtered {
+    background: var(--bg-tertiary); border: 1px dashed var(--border);
+    border-radius: 10px;
+}
+.char-empty strong { color: var(--text-primary); display: block; margin-bottom: 6px; font-size: 14px; }
+.char-empty p { font-size: 12px; margin-top: 6px; }
+.filter-rule-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.filter-rule-row input { flex: 1; font-size: 13px; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); }
+.filter-rule-row .rule-arrow { color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+.filter-rule-row .btn-del-rule { flex-shrink: 0; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 3px; }
+.filter-rule-row .btn-del-rule:hover { color: var(--danger); background: rgba(255,0,0,.1); }
+.filter-rule-row input:focus { outline: none; border-color: var(--border-focus); }
+.char-card {
+    display: flex; align-items: center; padding: 6px 10px; gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.06); min-height: 34px; transition: background 0.15s;
+}
+.char-card:hover { background: rgba(255,255,255,.04); }
+.char-emoji { font-size: 14px; flex-shrink: 0; }
+.char-name { font-weight: 600; font-size: 13px; white-space: nowrap; }
+.char-type-badge {
+    font-size: 10px; padding: 1px 5px; border-radius: 3px;
+    background: rgba(255,255,255,.08); color: var(--text-secondary); white-space: nowrap;
+}
+.char-status { flex: 1; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.char-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.char-actions button {
+    padding: 3px 5px; font-size: 12px; background: none; border: none;
+    cursor: pointer; opacity: 0; transition: opacity .15s; color: var(--text-secondary); border-radius: 4px;
+}
+.char-actions button:hover { background: rgba(255,255,255,.08); color: var(--text-primary); }
+.char-card:hover .char-actions button { opacity: 1; }
+.char-actions button.btn-danger { color: var(--danger); }
+.char-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.char-empty i { font-size: 32px; margin-bottom: 12px; opacity: 0.5; display: block; }
+.char-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+/* ── Inline edit mode ── */
+.char-card.editing {
+    flex-direction: column; align-items: stretch; padding: 12px;
+    background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px;
+}
+.char-edit-form { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.char-edit-form .form-group { margin-bottom: 10px; }
+.char-edit-form .form-label { font-size: 11px; margin-bottom: 4px; }
+.char-edit-form .input { padding: 8px 10px; font-size: 12px; }
+.char-edit-form textarea.input { min-height: 60px; }
+.char-outfit-editor-list { display: flex; flex-direction: column; gap: 10px; }
+.char-outfit-editor-empty {
+    padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border);
+    background: rgba(255,255,255,.02); color: var(--text-muted); font-size: 11px;
+}
+.char-outfit-editor-item {
+    padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.03);
+}
+.char-outfit-editor-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 10px;
+}
+.char-outfit-editor-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.char-outfit-editor-item .form-group:last-child { margin-bottom: 0; }
+.char-outfit-tags { min-height: 72px; }
+/* ── Toggle switch ── */
+.toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    position: absolute; inset: 0; background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; transition: all 0.2s;
+}
+.toggle-slider::before {
+    content: ''; position: absolute; width: 14px; height: 14px; left: 2px; bottom: 2px;
+    background: var(--text-secondary); border-radius: 50%; transition: all 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); background: #000; }
+.auto-learn-toggle-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.auto-learn-sub { margin-left: 44px; margin-top: 6px; font-size: 12px; color: var(--text-secondary); }
+.auto-learn-sub label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.char-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+}
+.char-section-header .card-title { margin-bottom: 0; }
+.char-section-toggle { color: var(--text-muted); font-size: 12px; transition: transform 0.2s; }
+.card.collapsed .char-section-toggle { transform: rotate(-90deg); }
+.card.collapsed .char-section-content { display: none; }
+.char-section-content { margin-top: 16px; }
+.preview-box {
+    margin-top: 16px; background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; text-align: center; display: none;
+}
+.preview-box.visible { display: block; }
+.preview-box img { max-width: 100%; max-height: 400px; border-radius: 6px; }
+.status-text { font-size: 12px; color: var(--text-secondary); margin-top: 8px; min-height: 18px; }
+.status-text.success { color: var(--success); }
+.status-text.error { color: var(--danger); }
+.status-text.loading { color: var(--warning); }
+.preset-bar .status-text.inline-status,
+.action-status-row .status-text {
+    margin-top: 0;
+    flex: 1 1 220px;
+    min-width: 180px;
+}
+.tip-box {
+    display: flex; gap: 10px; padding: 12px 14px; background: var(--accent-soft);
+    border: 1px solid rgba(212, 165, 116, 0.2); border-radius: 8px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+}
+.tip-text { display: flex; flex-direction: column; gap: 4px; }
+.tip-box i { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.gallery-char-section { margin-bottom: 16px; }
+.gallery-char-header {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; transition: all 0.15s;
+}
+.gallery-char-section:not(.collapsed) .gallery-char-header { border-radius: 10px 10px 0 0; }
+.gallery-char-header:hover { background: rgba(255,255,255,0.05); }
+.gallery-char-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.gallery-char-name { font-weight: 600; flex: 1; }
+.gallery-char-stats { font-size: 12px; color: var(--text-secondary); }
+.gallery-char-toggle { color: var(--text-muted); transition: transform 0.2s; }
+.gallery-char-section.collapsed .gallery-char-toggle { transform: rotate(-90deg); }
+.gallery-char-section.collapsed .gallery-slots { display: none; }
+.gallery-slots {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
+    padding: 16px; background: var(--bg-secondary);
+    border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px;
+}
+.gallery-slot {
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative;
+}
+.gallery-slot:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.gallery-slot-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--bg-input); }
+.gallery-slot-placeholder {
+    width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-input); color: var(--text-muted); font-size: 24px;
+}
+.gallery-slot-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8));
+    opacity: 0; transition: opacity 0.2s; display: flex;
+    flex-direction: column; justify-content: flex-end; padding: 10px;
+}
+.gallery-slot:hover .gallery-slot-overlay { opacity: 1; }
+.gallery-slot-actions { display: flex; gap: 6px; justify-content: center; }
+.gallery-slot-actions .btn { padding: 6px 10px; min-height: 28px; font-size: 11px; background: rgba(0,0,0,0.6); }
+.gallery-slot-info {
+    padding: 10px 12px; font-size: 11px; color: var(--text-secondary);
+    display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border);
+}
+.gallery-slot-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+}
+.gallery-slot-badge.count { background: var(--accent-soft); color: var(--accent); }
+.gallery-slot-badge.saved { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+.gallery-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.gallery-empty i { font-size: 48px; margin-bottom: 16px; opacity: 0.4; display: block; }
+.gallery-empty p { font-size: 13px; margin-top: 8px; }
+.gallery-loading { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+.gallery-loading i { margin-right: 8px; }
+.gallery-empty-hint { grid-column: 1 / -1; text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 13px; }
+.gallery-modal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9); z-index: 1000;
+    display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+}
+.gallery-modal.visible { display: flex; }
+.gallery-modal-close {
+    position: absolute; top: 16px; right: 16px; width: 44px; height: 44px;
+    border: none; background: rgba(255,255,255,0.1); border-radius: 50%;
+    color: #fff; font-size: 20px; cursor: pointer; z-index: 10;
+}
+.gallery-modal-close:hover { background: rgba(255,255,255,0.2); }
+.gallery-modal-content { max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.gallery-modal-img { max-width: 100%; max-height: 60vh; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+.gallery-modal-thumbs {
+    display: flex; gap: 8px; padding: 12px; background: rgba(0,0,0,0.5);
+    border-radius: 12px; max-width: 100%; overflow-x: auto;
+}
+.gallery-modal-thumb {
+    width: 60px; height: 60px; border-radius: 8px; object-fit: cover;
+    cursor: pointer; border: 2px solid transparent; opacity: 0.6;
+    transition: all 0.15s; flex-shrink: 0;
+}
+.gallery-modal-thumb:hover { opacity: 0.9; }
+.gallery-modal-thumb.active { border-color: var(--accent); opacity: 1; }
+.gallery-modal-thumb.saved { border-color: var(--success); }
+.gallery-modal-actions { display: flex; gap: 12px; }
+.gallery-modal-info { font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; }
+.mobile-nav {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px; background: var(--bg-secondary); border-top: 1px solid var(--border); z-index: 100;
+}
+.mobile-nav-inner { display: flex; height: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mobile-nav-inner::-webkit-scrollbar { display: none; }
+.mobile-nav-item {
+    flex: 1; min-width: 60px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    color: var(--text-muted); font-size: 10px; cursor: pointer; padding: 8px 4px;
+}
+.mobile-nav-item i { font-size: 18px; }
+.mobile-nav-item.active { color: var(--accent); }
+@media (max-width: 768px) {
+    .app-sidebar { display: none; }
+    .mobile-nav { display: block; }
+    .app-body { padding-bottom: 60px; }
+    .app-main { padding: 16px; padding-bottom: 76px; }
+    .app-header { padding: 10px 12px; gap: 8px; }
+    .header-logo span { display: none; }
+    .header-badge { padding: 4px 8px; font-size: 10px; }
+    .header-badge span { display: none; }
+    .header-mode button { padding: 5px 10px; font-size: 11px; }
+    .header-close { width: 32px; height: 32px; min-width: 32px; font-size: 14px; }
+    .header-credit { display: none; }
+    .view-title { font-size: 18px; }
+    .card { padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .char-management-layout { grid-template-columns: 1fr; }
+    .char-management-sidebar { position: static; }
+    .char-filter-row { grid-template-columns: 1fr; }
+    .char-list-card-header { flex-direction: column; }
+    .preset-bar { padding: 10px 12px; }
+    .preset-bar select { max-width: none; }
+    .preset-bar .status-text.inline-status,
+    .action-status-row .status-text { flex-basis: 100%; min-width: 0; }
+    .gallery-slots { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 12px; }
+}
+@media (max-width: 400px) {
+    .app-header { padding: 8px 10px; }
+    .header-mode button { padding: 4px 8px; font-size: 10px; }
+    .mobile-nav-item { min-width: 48px; font-size: 9px; }
+    .mobile-nav-item i { font-size: 16px; }
+}
+@media (hover: none) and (pointer: coarse) {
+    .btn { min-height: 44px; }
+    .input { min-height: 44px; padding: 12px; }
+    .nav-item { min-height: 44px; }
+    .header-close { width: 44px; height: 44px; min-width: 44px; }
+    .gallery-slot-overlay { opacity: 1; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7)); }
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+.hidden { display: none !important; }
+
+/* ── 提示词模板始终可见 ── */
+.nd-advanced-only { display: flex !important; }
+.nd-simple-only { display: none !important; }
+
+.prompt-textarea {
+    width: 100%; min-height: 180px; max-height: 400px;
+    padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 12px; line-height: 1.6; resize: vertical;
+    background: var(--bg-input); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    transition: border-color 0.2s;
+}
+.prompt-textarea:focus { border-color: var(--border-focus); outline: none; }
+
+.prompt-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+}
+.prompt-card-header .card-title { margin: 0; }
+
+.wb-book-list { display: flex; flex-direction: column; gap: 6px; }
+.wb-book-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+}
+.wb-book-item:hover { border-color: var(--border-focus); }
+.wb-book-name { flex: 1; font-weight: 500; }
+.wb-book-count { font-size: 12px; color: var(--text-secondary); }
+.wb-book-delete {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 2px 6px; font-size: 14px; line-height: 1; border-radius: 4px;
+}
+.wb-book-delete:hover { color: var(--danger); background: rgba(255,0,0,0.1); }
+
+.wb-dropzone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; padding: 24px; border: 2px dashed var(--border);
+    border-radius: 8px; cursor: pointer; text-align: center;
+    color: var(--text-secondary); transition: border-color 0.2s, background 0.2s;
+}
+.wb-dropzone:hover, .wb-dropzone.dragover {
+    border-color: var(--border-focus); background: rgba(255,255,255,0.03);
+}
+.wb-dropzone p { margin: 0; font-size: 13px; }
+
+.wb-entry-list { margin-top: 8px; }
+.wb-entry-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12px;
+}
+.wb-lamp { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; }
+.wb-lamp.constant { background: var(--success); }
+.wb-lamp.normal { background: #58a6ff; }
+.wb-lamp.disabled { background: var(--text-muted); }
+.wb-entry-info { flex: 1; min-width: 0; }
+.wb-entry-title { font-weight: 500; }
+.wb-entry-keys { color: var(--text-secondary); font-size: 11px; }
+.wb-entry-preview { color: var(--text-muted); font-size: 11px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Danbooru 搜索面板 */
+.danbooru-panel {
+    margin-top: 8px; padding: 12px; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: 8px;
+}
+.danbooru-panel.hidden { display: none; }
+.danbooru-search-row {
+    display: flex; gap: 8px; margin-bottom: 8px;
+}
+.danbooru-search-row input { flex: 1; padding: 6px 10px; font-size: 12px; }
+.danbooru-search-row .btn { padding: 6px 12px; font-size: 12px; white-space: nowrap; }
+.danbooru-char-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.danbooru-char-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; background: var(--bg-tertiary); border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: background 0.15s;
+}
+.danbooru-char-item:hover { background: var(--accent-soft); }
+.danbooru-char-item .char-count { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+.danbooru-char-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.danbooru-char-name { font-weight: 500; }
+.danbooru-char-series { font-size: 10px; color: var(--text-muted); font-style: italic; }
+.danbooru-tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.danbooru-tag-item {
+    display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.danbooru-tag-item:hover { border-color: var(--accent); }
+.danbooru-tag-item.checked { background: var(--accent-soft); border-color: var(--accent); }
+.danbooru-tag-item input[type="checkbox"] { margin: 0; width: 14px; height: 14px; }
+.danbooru-tag-freq { color: var(--text-muted); font-size: 10px; }
+.danbooru-actions { display: flex; gap: 8px; margin-top: 8px; }
+.danbooru-status { font-size: 11px; color: var(--text-muted); padding: 8px 0; }
+
+/* Auto-learn 区域 */
+.auto-learn-section {
+    margin-bottom: 16px; padding: 12px 16px; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: 8px;
+}
+.auto-learn-section label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.auto-learn-mode-row { margin-top: 8px; margin-left: 24px; }
+.auto-learn-mode-row.hidden { display: none; }
+.auto-learn-mode-row select { max-width: 200px; }
+
+/* 消息链可视化 */
+.prompt-chain-card { margin-top: 16px; }
+.prompt-chain-toggle { cursor: pointer; }
+.chain-toggle-icon { font-size: 12px; color: var(--text-muted); }
+.prompt-chain-container { display: none; margin-top: 8px; }
+.prompt-chain-container.open { display: block; }
+.chain-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 10px; border-radius: 6px; font-size: 12px;
+    cursor: pointer; transition: background 0.15s; margin-bottom: 4px;
+}
+.chain-item:hover { background: var(--bg-tertiary); }
+.chain-role {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 600; white-space: nowrap; min-width: 60px; text-align: center;
+}
+.chain-role.system { background: #7c3aed22; color: #a78bfa; }
+.chain-role.assistant { background: #3b82f622; color: #60a5fa; }
+.chain-role.user { background: #10b98122; color: #34d399; }
+.chain-summary { flex: 1; min-width: 0; }
+.chain-summary-text { display: flex; align-items: center; gap: 6px; }
+.chain-editable { font-size: 10px; opacity: 0.7; }
+.chain-variables { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.chain-content-preview {
+    display: none; margin-top: 6px; padding: 8px;
+    background: var(--bg-input); border-radius: 6px;
+    font-family: monospace; font-size: 10px; white-space: pre-wrap;
+    max-height: 200px; overflow-y: auto; color: var(--text-muted);
+}
+.chain-item.expanded .chain-content-preview { display: block; }
+.llm-request-preview {
+    margin-top: 10px; padding: 12px; max-height: 360px; overflow: auto;
+    background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-secondary); font-family: monospace; font-size: 11px; line-height: 1.45;
+    white-space: pre-wrap; word-break: break-word;
+}
+</style>
+</head>
+
+<body>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     主容器
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="app-container">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         头部
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <header class="app-header">
+        <div class="header-logo"><i class="fa-solid fa-palette"></i><span>Novel Draw</span></div>
+        <div id="nd_badge" class="header-badge"><i class="fa-solid fa-circle"></i><span>未启用</span></div>
+        <span class="header-credit" id="nd_credits"></span>
+        <div class="header-spacer"></div>
+        <div class="header-toggles">
+            <label class="header-toggle">
+                <input type="checkbox" id="nd_show_floor">
+                <span>楼层</span>
+            </label>
+            <label class="header-toggle">
+                <input type="checkbox" id="nd_show_floating">
+                <span>悬浮</span>
+            </label>
+        </div>
+        <div class="header-mode">
+            <button data-mode="manual" class="active">手动</button>
+            <button data-mode="auto">自动</button>
+        </div>
+        <button id="nd_close" class="header-close">✕</button>
+    </header>
+
+    <div class="app-body">
+        <!-- ═══════════════════════════════════════════════════════════════════
+             侧边栏
+             ═══════════════════════════════════════════════════════════════════ -->
+        <nav class="app-sidebar">
+            <div class="nav-item active" data-view="test"><i class="fa-solid fa-flask"></i>快速测试</div>
+            <div class="nav-item" data-view="api"><i class="fa-solid fa-key"></i>API 配置</div>
+            <div class="nav-divider"></div>
+            <div class="nav-item" data-view="params"><i class="fa-solid fa-sliders"></i>绘图参数</div>
+            <div class="nav-item" data-view="llm"><i class="fa-solid fa-robot"></i>LLM 配置</div>
+            <div class="nav-divider"></div>
+            <div class="nav-item" data-view="characters"><i class="fa-solid fa-user-group"></i>角色标签</div>
+            <div class="nav-item" data-view="gallery"><i class="fa-solid fa-images"></i>图片管理</div>
+            <div class="nav-divider"></div>
+            <div class="nav-item nd-advanced-only" data-view="prompts"><i class="fa-solid fa-file-code"></i>提示词模板</div>
+            <div class="nav-item" data-view="worldbook"><i class="fa-solid fa-book-atlas"></i>世界书</div>
+        </nav>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             主内容区
+             ═══════════════════════════════════════════════════════════════════ -->
+        <main class="app-main">
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 快速测试
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-test" class="view active">
+                <div class="view-header">
+                    <h2 class="view-title">快速测试</h2>
+                    <p class="view-desc">验证 API 连接和生成效果</p>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">测试 TAG</label>
+                        <div class="input-row">
+                            <input id="nd_test_tags" type="text" class="input" value="1girl, smile, upper body, simple background">
+                            <button id="nd_test_single" class="btn btn-primary"><i class="fa-solid fa-play"></i> 生成</button>
+                        </div>
+                    </div>
+                    <div id="nd_preview" class="preview-box"><img id="nd_preview_img" alt=""></div>
+                    <div id="nd_status" class="status-text"></div>
+                </div>
+                <div class="tip-box">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <div class="tip-text">
+                        <div>消息楼层按钮的 🎨 为对应消息生成配图。</div>
+                        <div>悬浮按钮的 🎨 仅作用于最后一条AI消息。</div>
+                        <div>开启自动模式后，AI回复时会自动配图。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 API 配置
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-api" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">API 配置</h2>
+                    <p class="view-desc">NovelAI 服务连接设置</p>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">NovelAI API Key</label>
+                        <div class="input-row">
+                            <input id="nd_api_key" type="password" class="input" placeholder="pst-xxxxxxxx...">
+                            <button id="nd_toggle_key" class="btn btn-icon"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <p class="form-hint">仅存储在本地浏览器</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">超时时间 (秒)</label>
+                            <input id="nd_timeout" type="number" class="input" value="60">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">请求间隔 (毫秒)</label>
+                            <input id="nd_delay" type="text" class="input" value="15000-30000">
+                        </div>
+                    </div>
+                    <div class="btn-group" style="margin-top: 16px;">
+                        <button id="nd_save_api" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                        <button id="nd_test_api" class="btn"><i class="fa-solid fa-plug"></i> 测试连接</button>
+                    </div>
+                    <div id="nd_api_status" class="status-text"></div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 绘图参数
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-params" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">绘图参数</h2>
+                    <p class="view-desc">模型与生成参数设置</p>
+                </div>
+                
+                <div class="preset-bar">
+                    <select id="nd_params_preset" class="input"></select>
+                    <div class="btn-group">
+                        <button id="nd_params_add" class="btn btn-icon" title="新建"><i class="fa-solid fa-plus"></i></button>
+                        <button id="nd_params_rename" class="btn btn-icon" title="重命名"><i class="fa-solid fa-pen"></i></button>
+                        <button id="nd_params_save" class="btn btn-primary" title="保存"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button id="nd_params_cloud" class="btn btn-icon" title="云端预设" style="color:#d4a574;"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+                        <button id="nd_params_export" class="btn btn-icon" title="导出当前预设"><i class="fa-solid fa-share-from-square"></i></button>
+                        <button id="nd_params_del" class="btn btn-danger btn-icon" title="删除"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div id="nd_params_status" class="status-text inline-status"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">🌐 全局标签</div>
+                    <div class="form-group">
+                        <label class="form-label">正向固定 / 画风固定</label>
+                        <textarea id="nd_positive" class="input" rows="3" placeholder="masterpiece, best quality..."></textarea>
+                        <p class="form-hint">想稳定画风，请把固定风格、画师、年代、渲染方式等写在这里；LLM 只负责补当前剧情场景。</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">负向固定</label>
+                        <textarea id="nd_negative" class="input" rows="3" placeholder="lowres, bad anatomy..."></textarea>
+                        <p class="form-hint">鬼图、畸形、风格污染相关的排除词也建议固定在这里。</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">模型与采样</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">模型</label>
+                            <select id="nd_model_sel" class="input">
+                                <option value="nai-diffusion-4-5-full">NAI V4.5 Full</option>
+                                <option value="nai-diffusion-4-5-curated">NAI V4.5 Curated</option>
+                                <option value="nai-diffusion-4-full">NAI V4 Full</option>
+                                <option value="nai-diffusion-3">NAI V3</option>
+                                <option value="nai-diffusion-furry-3">Furry V3</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <input id="nd_model" type="text" class="input hidden" placeholder="模型ID" style="margin-top:6px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">采样器</label>
+                            <select id="nd_sampler_sel" class="input">
+                                <option value="k_euler_ancestral">Euler Ancestral</option>
+                                <option value="k_euler">Euler</option>
+                                <option value="k_dpmpp_2m">DPM++ 2M</option>
+                                <option value="k_dpmpp_sde">DPM++ SDE</option>
+                                <option value="ddim">DDIM</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <input id="nd_sampler" type="text" class="input hidden" style="margin-top:6px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">调度器</label>
+                            <select id="nd_scheduler_sel" class="input">
+                                <option value="native">Native</option>
+                                <option value="karras">Karras</option>
+                                <option value="exponential">Exponential</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <input id="nd_scheduler" type="text" class="input hidden" style="margin-top:6px;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">尺寸与参数</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">尺寸预设</label>
+                            <select id="nd_size_preset" class="input">
+                                <option value="832x1216">832×1216 竖图</option>
+                                <option value="1216x832">1216×832 横图</option>
+                                <option value="1024x1024">1024×1024 方图</option>
+                                <option value="768x1280">768×1280 竖图</option>
+                                <option value="1280x768">1280×768 横图</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="nd_custom_size" class="input-row hidden" style="margin-top:6px;">
+                                <input id="nd_width" type="number" class="input" placeholder="宽度">
+                                <input id="nd_height" type="number" class="input" placeholder="高度">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Steps / CFG / Seed</label>
+                            <div class="input-row">
+                                <input id="nd_steps" type="number" class="input" placeholder="23" title="Steps">
+                                <input id="nd_scale" type="number" class="input" placeholder="5" title="CFG">
+                                <input id="nd_seed" type="number" class="input" placeholder="-1" title="Seed">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">数量限制</div>
+                    <p class="form-hint">指定 LLM 应规划的图片数量和每张图角色数 (0 = 不指定)</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">要求出图数</label>
+                            <input id="nd_max_images" type="number" class="input" min="0" max="20" value="0" title="0=不指定">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">每张图最大角色数</label>
+                            <input id="nd_max_chars" type="number" class="input" min="0" max="10" value="0" title="0=不指定">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">增强选项</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">质量增强</label>
+                            <select id="nd_quality_toggle" class="input">
+                                <option value="true">开启</option>
+                                <option value="false">关闭</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">负面预设</label>
+                            <select id="nd_uc_preset" class="input">
+                                <option value="0">Heavy</option>
+                                <option value="1">Light</option>
+                                <option value="2">Human Focus</option>
+                                <option value="3">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">自动 SMEA</label>
+                            <select id="nd_auto_smea" class="input">
+                                <option value="false">关闭</option>
+                                <option value="true">开启</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CFG 重缩放</label>
+                            <input id="nd_cfg_rescale" type="number" class="input" value="0" min="0" max="1" step="0.05">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:12px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="nd_variety_boost"> 多样性增强 (V4.5)
+                        </label>
+                    </div>
+                    <div id="nd_v3_opts" class="form-group hidden" style="margin-top:12px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="nd_sm"> SMEA</label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px;"><input type="checkbox" id="nd_sm_dyn"> SMEA 动态</label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px;"><input type="checkbox" id="nd_decrisper"> Decrisper</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 LLM 配置
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-llm" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">LLM 配置</h2>
+                    <p class="view-desc">场景分析所用的大语言模型渠道设置</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">渠道配置</div>
+                    <div class="form-group">
+                        <label class="form-label">LLM 渠道</label>
+                        <select id="nd_llm_provider" class="input">
+                            <option value="st">酒馆主 API</option>
+                            <option value="openai">OpenAI 兼容</option>
+                            <option value="google">Google Gemini</option>
+                            <option value="claude">Claude</option>
+                        </select>
+                    </div>
+                    <div id="nd_llm_url_row" class="form-group hidden">
+                        <label class="form-label">API URL</label>
+                        <input id="nd_llm_url" type="text" class="input" placeholder="https://api.openai.com/v1">
+                        <p class="form-hint">可直接填写完整前缀（如 /v1、/v3、/v1beta）；若只填裸地址，拉模型时会按渠道补默认前缀。</p>
+                    </div>
+                    <div id="nd_llm_key_row" class="form-group hidden">
+                        <label class="form-label">API Key</label>
+                        <input id="nd_llm_key" type="password" class="input" placeholder="sk-xxx...">
+                    </div>
+                    <div id="nd_llm_model_manual_row" class="form-group hidden">
+                        <label class="form-label">模型</label>
+                        <input id="nd_llm_model_manual" type="text" class="input" placeholder="gemini-1.5-pro">
+                    </div>
+                    <div id="nd_llm_model_select_row" class="form-group hidden">
+                        <label class="form-label">模型</label>
+                        <select id="nd_llm_model_select" class="input"><option value="">请先拉取模型列表</option></select>
+                    </div>
+                    <div id="nd_llm_connect_row" class="btn-group hidden" style="margin-top:12px;">
+                        <button id="nd_llm_fetch" class="btn"><i class="fa-solid fa-plug"></i> 连接 / 拉取模型列表</button>
+                    </div>
+                    <div id="nd_llm_fetch_status" class="status-text"></div>
+
+				<div class="form-group" style="margin-top:16px;">
+				    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+				        <input type="checkbox" id="nd_use_stream"> 启用流式生成
+				    </label>
+				</div>
+				<div class="form-group" style="margin-top:8px;">
+				    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+				        <input type="checkbox" id="nd_disable_prefill"> 禁用尾部预填充
+				    </label>
+				    <p class="form-hint" style="margin-left:24px;">如果当前模型开启后报错，再勾选此项。</p>
+				</div>
+                    
+                    <div class="action-status-row">
+                        <div class="btn-group">
+                            <button id="nd_llm_save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> 保存配置</button>
+                        </div>
+                        <div id="nd_llm_status" class="status-text"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">消息过滤规则</div>
+                    <p class="form-hint" style="margin-bottom:8px;">过滤 RP 消息中的干扰内容（如思考标签），避免影响场景分析。<br>起始和结束之间的内容会被移除。起始留空 = 从消息开头到结束标记；结束留空 = 从起始标记到消息末尾。</p>
+                    <div id="nd_filter_rules_list"></div>
+                    <div class="btn-group" style="margin-top:8px; gap:8px; flex-wrap:wrap;">
+                        <button id="nd_filter_add" class="btn btn-sm">+ 添加规则</button>
+                        <button id="nd_filter_sync" class="btn btn-sm">同步总结的过滤规则</button>
+                        <button id="nd_filter_reset" class="btn btn-sm">恢复默认</button>
+                    </div>
+                    <div class="action-status-row">
+                        <div class="btn-group">
+                            <button id="nd_filter_save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> 保存规则</button>
+                        </div>
+                        <div id="nd_filter_status" class="status-text"></div>
+                    </div>
+                </div>
+
+                <div class="tip-box nd-simple-only">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <div>场景分析提示词由插件内置，无需配置。世界书注入请到「世界书」页统一管理。</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">最近一次实际请求</div>
+                    <p class="form-hint">显示最近一次场景分析请求，方便检查提示词和上下文。</p>
+                    <div class="btn-group" style="margin-top:8px;">
+                        <button id="nd_llm_request_refresh" class="btn btn-sm" type="button">刷新最近请求</button>
+                    </div>
+                    <pre id="nd_llm_request_preview" class="llm-request-preview">暂无请求记录，请先触发一次画图分析。</pre>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 角色标签
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-characters" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">角色标签</h2>
+                    <p class="view-desc">集中管理角色外貌标签、自动学习与 Danbooru 资源库，PC 端支持双栏管理</p>
+                </div>
+
+                <div class="char-management-layout">
+                    <aside class="char-management-sidebar">
+                        <div class="card">
+                            <div class="card-title">📊 角色概览</div>
+                            <div class="char-summary-grid">
+                                <div class="char-summary-item">
+                                    <div class="char-summary-label">总角色数</div>
+                                    <div class="char-summary-value accent" id="nd_char_stat_total">0</div>
+                                </div>
+                                <div class="char-summary-item">
+                                    <div class="char-summary-label">已配置外貌</div>
+                                    <div class="char-summary-value" id="nd_char_stat_ready">0</div>
+                                </div>
+                                <div class="char-summary-item">
+                                    <div class="char-summary-label">待完善</div>
+                                    <div class="char-summary-value" id="nd_char_stat_missing">0</div>
+                                </div>
+                                <div class="char-summary-item">
+                                    <div class="char-summary-label">Danbooru 已绑定</div>
+                                    <div class="char-summary-value" id="nd_char_stat_danbooru">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">🔎 搜索与筛选</div>
+                            <div class="form-group">
+                                <label class="form-label">关键词</label>
+                                <input id="nd_char_search" type="text" class="input" placeholder="搜索名称、别名、外貌、Danbooru 标签">
+                            </div>
+                            <div class="char-filter-row">
+                                <div class="form-group">
+                                    <label class="form-label">角色类型</label>
+                                    <select id="nd_char_filter_type" class="input">
+                                        <option value="all">全部类型</option>
+                                        <option value="girl">girl</option>
+                                        <option value="woman">woman</option>
+                                        <option value="boy">boy</option>
+                                        <option value="man">man</option>
+                                        <option value="other">other</option>
+                                        <option value="custom">自定义类型</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">状态筛选</label>
+                                    <select id="nd_char_filter_status" class="input">
+                                        <option value="all">全部状态</option>
+                                        <option value="complete">已配置外貌</option>
+                                        <option value="incomplete">待完善外貌</option>
+                                        <option value="danbooru">已绑定 Danbooru</option>
+                                        <option value="negative">含负向标签</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button id="nd_char_filter_reset" class="btn btn-sm"><i class="fa-solid fa-rotate-left"></i> 重置筛选</button>
+                            </div>
+                            <div id="nd_char_filter_summary" class="char-filter-summary">当前显示全部角色</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">🧰 批量操作</div>
+                            <div class="btn-group">
+                                <button id="nd_char_add" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> 添加角色</button>
+                                <button id="nd_char_clear" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i> 清除全部</button>
+                                <button id="nd_char_export" class="btn btn-sm"><i class="fa-solid fa-download"></i> 导出</button>
+                                <label class="btn btn-sm" style="cursor:pointer;"><i class="fa-solid fa-upload"></i> 导入<input type="file" id="nd_char_import" accept=".json" style="display:none;"></label>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">🧠 智能辅助</div>
+                            <div class="auto-learn-section" style="margin-bottom:12px;">
+                                <div class="auto-learn-toggle-row">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="nd_auto_learn">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span>自动学习角色</span>
+                                </div>
+                                <div id="nd_auto_learn_sub" class="auto-learn-sub hidden">
+                                    <label>
+                                        <input type="checkbox" id="nd_auto_learn_update"> 同时补全已有角色空白外貌
+                                    </label>
+                                </div>
+                                <p class="form-hint" style="margin-left:44px;margin-top:4px;">生成图片时自动记住 LLM 识别的新角色</p>
+                            </div>
+                            <div class="auto-learn-section">
+                                <div class="auto-learn-toggle-row">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="nd_danbooru_local">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span>（测试）Danbooru 角色资源库</span>
+                                </div>
+                                <div id="nd_danbooru_local_sub" class="auto-learn-sub hidden">
+                                    <span id="nd_danbooru_local_status" style="font-size:11px;color:var(--text-muted);">未加载</span>
+                                </div>
+                                <p class="form-hint" style="margin-left:44px;margin-top:4px;">启用后加载本地 Danbooru top 7000 角色库，支持离线搜索和自动修正 danbooruTag</p>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <section class="char-management-main">
+                        <div class="card char-list-card" id="nd_char_card">
+                            <div class="char-list-card-header">
+                                <div>
+                                    <div class="card-title">👥 角色列表</div>
+                                    <p class="form-hint" style="margin-top:6px;">预设角色外貌，LLM 只需补充动作和互动标签</p>
+                                </div>
+                                <div class="char-list-count" id="nd_char_result_count">0 / 0</div>
+                            </div>
+                            <div class="char-list-body">
+                                <div id="nd_char_list" class="char-grid"></div>
+                                <div id="nd_char_empty" class="char-empty">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <strong>暂无角色配置</strong>
+                                    <p>点击左侧“添加角色”，开始建立你的角色标签库</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 图片管理
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-gallery" class="view wide">
+                <div class="view-header">
+                    <h2 class="view-title">图片管理</h2>
+                    <p class="view-desc">查看、管理和清理生成的配图</p>
+                </div>
+                
+                <div class="card" style="margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                        <div style="display:flex;gap:32px;">
+                            <div style="text-align:center;">
+                                <div style="font-size:28px;font-weight:700;color:var(--accent);" id="nd_cache_count">0</div>
+                                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">图片数量</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-size:28px;font-weight:700;" id="nd_cache_size">0 MB</div>
+                                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">占用空间</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:6px;background:var(--bg-input);padding:6px 10px;border-radius:8px;border:1px solid var(--border);">
+                            <span style="font-size:12px;color:var(--text-secondary);">自动清理</span>
+                            <input id="nd_cache_days" type="number" class="input" style="width:50px;padding:4px 6px;min-height:28px;text-align:center;" value="3" min="1" max="30">
+                            <span style="font-size:12px;color:var(--text-secondary);">天</span>
+                            <button id="nd_save_cache_days" class="btn btn-sm btn-icon" style="min-height:28px;width:28px;padding:0;"><i class="fa-solid fa-check"></i></button>
+                        </div>
+                        <div id="nd_gallery_status" class="status-text" style="flex:1 1 220px;min-width:180px;margin-top:0;"></div>
+                        <button id="nd_clear_expired" class="btn btn-sm"><i class="fa-solid fa-broom"></i> 清理过期</button>
+                        <button id="nd_clear_all" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i> 清空全部</button>
+                        <button id="nd_refresh_stats" class="btn btn-sm btn-icon"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="nd_gallery_container"></div>
+                <div id="nd_gallery_empty" class="gallery-empty" style="display:none;">
+                    <i class="fa-solid fa-images"></i>
+                    <div>暂无图片</div>
+                    <p>生成的配图会显示在这里，点击角色展开查看</p>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 提示词模板
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-prompts" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">提示词模板</h2>
+                    <p class="view-desc">自定义场景分析的 LLM 提示词模板</p>
+                </div>
+
+                <div class="preset-bar">
+                    <select id="nd_prompt_preset" class="input"></select>
+                    <div class="btn-group">
+                        <button id="nd_prompt_add" class="btn btn-icon" title="新建"><i class="fa-solid fa-plus"></i></button>
+                        <button id="nd_prompt_rename" class="btn btn-icon" title="重命名"><i class="fa-solid fa-pen"></i></button>
+                        <button id="nd_prompt_preset_save" class="btn btn-primary" title="保存"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button id="nd_prompt_del" class="btn btn-danger btn-icon" title="删除"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div id="nd_prompt_preset_status" class="status-text inline-status"></div>
+                </div>
+
+                <div class="card">
+                    <div class="prompt-card-header">
+                        <div class="card-title">系统提示词 (System Prompt)</div>
+                        <button class="btn btn-sm" id="nd_prompt_reset_system"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button>
+                    </div>
+                    <p class="form-hint">定义 LLM 的角色定位和 VSPF 框架</p>
+                    <textarea id="nd_prompt_system" class="prompt-textarea" rows="8"></textarea>
+                </div>
+
+                <div class="card">
+                    <div class="prompt-card-header">
+                        <div class="card-title">TAG 编写指南</div>
+                        <button class="btn btn-sm" id="nd_prompt_reset_guide"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button>
+                    </div>
+                    <p class="form-hint">注入给 LLM 的 TAG 编写规范参考</p>
+                    <textarea id="nd_prompt_guide" class="prompt-textarea" rows="8"></textarea>
+                </div>
+
+                <div class="card">
+                    <div class="prompt-card-header">
+                        <div class="card-title">输出格式规范</div>
+                        <button class="btn btn-sm" id="nd_prompt_reset_format"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button>
+                    </div>
+                    <p class="form-hint">定义 LLM 输出 YAML 的格式要求</p>
+                    <textarea id="nd_prompt_format" class="prompt-textarea" rows="8"></textarea>
+                </div>
+
+                <div class="action-status-row">
+                    <div class="btn-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button id="nd_prompts_save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> 保存到当前预设</button>
+                        <button id="nd_prompts_reset_all" class="btn btn-danger"><i class="fa-solid fa-rotate-left"></i> 全部恢复默认</button>
+                        <button id="nd_prompts_export" class="btn"><i class="fa-solid fa-download"></i> 导出模板</button>
+                        <label class="btn" style="cursor:pointer;"><i class="fa-solid fa-upload"></i> 导入模板<input type="file" id="nd_prompts_import" accept=".json" style="display:none;"></label>
+                    </div>
+                    <div id="nd_prompts_status" class="status-text"></div>
+                </div>
+
+                <!-- 消息链结构预览 -->
+                <div class="card prompt-chain-card">
+                    <div class="prompt-card-header prompt-chain-toggle" id="nd_chain_toggle">
+                        <div class="card-title"><i class="fa-solid fa-link"></i> 消息链结构</div>
+                        <span class="chain-toggle-icon">▶ 展开</span>
+                    </div>
+                    <p class="form-hint">LLM 实际收到的消息链顺序（点击查看模板内容）</p>
+                    <div id="nd_prompt_chain" class="prompt-chain-container"></div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 世界书管理
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="view-worldbook" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">世界书</h2>
+                    <p class="view-desc">统一管理画图场景分析可注入的世界书来源</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">酒馆当前世界书</div>
+                    <label class="check-row"><input type="checkbox" id="nd_use_worldinfo"> 使用酒馆当前世界书</label>
+                    <p class="form-hint" style="margin-left:12px;">使用 SillyTavern 当前已启用的世界书，按酒馆原生规则扫描蓝灯、绿灯条目后注入。</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">画图上传世界书</div>
+                    <label class="check-row"><input type="checkbox" id="nd_wb_enabled"> 启用画图上传世界书</label>
+                    <p class="form-hint" style="margin-left:12px;">支持常驻、关键词、禁用的简化过滤；可与酒馆当前世界书同时开启。</p>
+                    <p class="form-hint" style="margin-top:12px;">支持酒馆导出的 .json 世界书文件，可多选。</p>
+                    <input type="file" id="nd_wb_file_input" multiple accept=".json" style="display:none;">
+                    <div id="nd_wb_dropzone" class="wb-dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px;opacity:0.5;"></i>
+                        <p>点击或拖拽 .json 文件到此处</p>
+                    </div>
+                    <div id="nd_wb_uploaded_list" class="wb-book-list" style="margin-top:12px;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">过滤设置</div>
+                    <div class="form-group">
+                        <label class="form-label">过滤模式</label>
+                        <select id="nd_wb_filter_mode" class="input">
+                            <option value="auto">自动 (简化关键词过滤)</option>
+                            <option value="all_active">全部激活条目</option>
+                        </select>
+                        <p class="form-hint">自动模式：常驻条目始终注入；普通条目按关键词匹配；禁用条目排除。该过滤是画图模块简化规则，不完全等同酒馆原生世界书。</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">条目预览</div>
+                    <p class="form-hint">点击已上传的世界书可预览其条目</p>
+                    <div id="nd_wb_entries" class="wb-entry-list">
+                        <p class="form-hint">请先上传世界书</p>
+                    </div>
+                </div>
+
+                <div class="action-status-row">
+                    <div class="btn-group">
+                        <button id="nd_wb_save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> 保存配置</button>
+                    </div>
+                    <div id="nd_wb_status" class="status-text"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         移动端导航
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-inner">
+            <div class="mobile-nav-item active" data-view="test"><i class="fa-solid fa-flask"></i><span>测试</span></div>
+            <div class="mobile-nav-item" data-view="api"><i class="fa-solid fa-key"></i><span>API</span></div>
+            <div class="mobile-nav-item" data-view="params"><i class="fa-solid fa-sliders"></i><span>参数</span></div>
+            <div class="mobile-nav-item" data-view="llm"><i class="fa-solid fa-robot"></i><span>LLM</span></div>
+            <div class="mobile-nav-item" data-view="characters"><i class="fa-solid fa-user-group"></i><span>角色</span></div>
+            <div class="mobile-nav-item" data-view="gallery"><i class="fa-solid fa-images"></i><span>图片</span></div>
+            <div class="mobile-nav-item nd-advanced-only" data-view="prompts"><i class="fa-solid fa-file-code"></i><span>提示词</span></div>
+            <div class="mobile-nav-item" data-view="worldbook"><i class="fa-solid fa-book-atlas"></i><span>世界书</span></div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         画廊弹窗
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="nd_gallery_modal" class="gallery-modal" role="dialog" aria-modal="true" aria-label="画廊">
+        <button class="gallery-modal-close" id="nd_modal_close" aria-label="关闭">✕</button>
+        <div class="gallery-modal-content">
+            <img class="gallery-modal-img" id="nd_modal_img" src="" alt="">
+            <div class="gallery-modal-thumbs" id="nd_modal_thumbs"></div>
+            <div class="gallery-modal-actions">
+                <button class="btn btn-primary" id="nd_modal_use"><i class="fa-solid fa-check"></i> 使用此图</button>
+                <button class="btn" id="nd_modal_save"><i class="fa-solid fa-floppy-disk"></i> 保存到服务器</button>
+                <button class="btn btn-danger" id="nd_modal_delete"><i class="fa-solid fa-trash"></i> 删除</button>
+            </div>
+            <div class="gallery-modal-info" id="nd_modal_info"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     脚本
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// 常量
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULTS = {
+    timeout: 60000,
+    requestDelay: { min: 15000, max: 30000 },
+    cacheDays: 3,
+    params: {
+        model: 'nai-diffusion-4-5-full',
+        sampler: 'k_euler_ancestral',
+        scheduler: 'karras',
+        steps: 28,
+        scale: 6,
+        width: 1216,
+        height: 832,
+        seed: -1,
+        qualityToggle: true,
+        autoSmea: false,
+        ucPreset: 0,
+        cfg_rescale: 0,
+        variety_boost: false,
+        sm: false,
+        sm_dyn: false,
+        decrisper: false
+    }
+};
+
+const CHARACTER_TYPES = [
+    { value: 'girl', label: 'girl (少女)' },
+    { value: 'woman', label: 'woman (成年女性)' },
+    { value: 'boy', label: 'boy (少年)' },
+    { value: 'man', label: 'man (成年男性)' },
+    { value: 'other', label: 'other (其他)' },
+    { value: 'custom', label: '自定义...' }
+];
+
+const providerDefaults = {
+    st: { url: '', needKey: false, canFetch: false, needManualModel: false },
+    openai: { url: 'https://api.openai.com', needKey: true, canFetch: true, needManualModel: false },
+    google: { url: 'https://generativelanguage.googleapis.com', needKey: true, canFetch: true, needManualModel: false },
+    claude: { url: 'https://api.anthropic.com', needKey: true, canFetch: false, needManualModel: true }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 状态
+// ═══════════════════════════════════════════════════════════════════════════
+
+let state = {
+    enabled: false,
+    mode: 'manual',
+    apiKey: '',
+    timeout: DEFAULTS.timeout,
+    requestDelay: { ...DEFAULTS.requestDelay },
+    cacheDays: DEFAULTS.cacheDays,
+    cacheStats: { count: 0, sizeMB: '0' },
+    selectedParamsPresetId: null,
+    paramsPresets: [],
+    llmApi: { provider: 'st', url: '', key: '', model: '', modelCache: [] },
+    useStream: true,
+    characterTags: [],
+    autoLearnCharacters: false,
+    autoLearnMode: 'new_only',
+    danbooruLocalDB: false,
+    showFloorButton: true,
+    showFloatingButton: false,
+    promptPresets: [],
+    selectedPromptPresetId: null,
+    messageFilterRules: [],
+};
+
+let gallerySummary = {};
+let loadedCharPreviews = {};
+let editingCharId = null;
+const saveBtnStates = new WeakMap();
+let charFilters = { query: '', type: 'all', status: 'all' };
+let modalData = { slotId: null, images: [], currentIndex: 0, charName: null };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 工具函数
+// ═══════════════════════════════════════════════════════════════════════════
+
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+const PARENT_ORIGIN = (() => {
+    try { return new URL(document.referrer).origin; } catch { return window.location.origin; }
+})();
+function postToParent(payload) {
+    window.parent.postMessage({ source: 'NovelDraw-Frame', ...payload }, PARENT_ORIGIN);
+}
+
+function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+const previewObjectUrls = new Map();
+
+function parsePreviewBase64(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    const match = raw.match(/^data:([^;]+);base64,(.*)$/i);
+    return {
+        mime: match?.[1] || 'image/png',
+        data: match ? match[2] : raw,
+    };
+}
+
+function base64ToObjectUrl(base64, mime) {
+    const binary = atob(base64);
+    const chunkSize = 8192;
+    const chunks = [];
+    for (let offset = 0; offset < binary.length; offset += chunkSize) {
+        const slice = binary.slice(offset, offset + chunkSize);
+        const bytes = new Uint8Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            bytes[i] = slice.charCodeAt(i);
+        }
+        chunks.push(bytes);
+    }
+    return URL.createObjectURL(new Blob(chunks, { type: mime }));
+}
+
+function getGalleryImageUrl(image = {}) {
+    const savedUrl = String(image.savedUrl || '').trim();
+    if (savedUrl) return savedUrl;
+    const parsed = parsePreviewBase64(image.base64);
+    if (!parsed?.data) return '';
+    if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function' || typeof atob !== 'function') {
+        return `data:${parsed.mime};base64,${parsed.data}`;
+    }
+    const key = String(image.imgId || '').trim() || `inline-${parsed.data.slice(0, 80)}`;
+    const cached = previewObjectUrls.get(key);
+    if (cached) return cached;
+    try {
+        const url = base64ToObjectUrl(parsed.data, parsed.mime);
+        previewObjectUrls.set(key, url);
+        return url;
+    } catch {
+        return `data:${parsed.mime};base64,${parsed.data}`;
+    }
+}
+
+function getCharEmoji(name) {
+    const emojis = ['👤','👩','👨','🧑','👧','👦','👸','🤴','🧙','🧝','🧛','🦸'];
+    return emojis[String(name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % emojis.length];
+}
+
+function parseDelay(str) {
+    const parts = String(str).split('-').map(s => parseInt(s.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return { min: Math.min(parts[0], parts[1]), max: Math.max(parts[0], parts[1]) };
+    }
+    const single = parseInt(str);
+    if (!isNaN(single) && single > 0) return { min: single, max: single };
+    return { ...DEFAULTS.requestDelay };
+}
+
+function shuffleCredits() {
+    const authors = ['𝓡𝓸𝓻𝓸𝓵𝓵𝓵𝓷', '阡濯', '小白狐'];
+    const shuffled = authors.sort(() => Math.random() - 0.5);
+    const el = document.getElementById('nd_credits');
+    if (el) {
+        el.innerHTML = shuffled
+            .map(name => `· <span class="credit-author">${name}</span>`)
+            .join(' ');
+    }
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// UI 更新
+// ═══════════════════════════════════════════════════════════════════════════
+
+function switchView(viewId) {
+    $$('.view').forEach(v => v.classList.remove('active'));
+    $$('.nav-item, .mobile-nav-item').forEach(n => n.classList.remove('active'));
+    $(`view-${viewId}`)?.classList.add('active');
+    $$(`[data-view="${viewId}"]`).forEach(n => n.classList.add('active'));
+    if (viewId === 'gallery') postToParent({ type: 'REFRESH_CACHE_STATS' });
+}
+
+function updateModeButtons(mode) {
+    $$('.header-mode button').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+}
+
+function updateBadge(enabled) {
+    const b = $('nd_badge');
+    b.className = 'header-badge' + (enabled ? ' on' : '');
+    b.querySelector('span').textContent = enabled ? '已启用' : '未启用';
+}
+
+function updateStatus(el, st, text) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'status-text' + (st ? ' ' + st : '');
+}
+
+function setSavingState(btn) {
+    if (!btn) return;
+    saveBtnStates.set(btn, true);
+    const i = btn.querySelector('i');
+    if (i) { btn._origIcon = i.className; i.className = 'fa-solid fa-spinner fa-spin'; }
+    btn.classList.add('saving');
+}
+
+function handleSaveResult(success, targetBtn) {
+    const btn = targetBtn || Array.from(document.querySelectorAll('.saving')).find(b => saveBtnStates.has(b));
+    if (!btn) return;
+    saveBtnStates.delete(btn);
+    btn.classList.remove('saving');
+    const i = btn.querySelector('i');
+
+    if (success && i) {
+        i.className = 'fa-solid fa-check';
+        btn.classList.add('save-success');
+        setTimeout(() => {
+            btn.classList.remove('save-success');
+            i.className = btn._origIcon || 'fa-solid fa-floppy-disk';
+        }, 1500);
+    } else if (i) {
+        i.className = 'fa-solid fa-xmark';
+        btn.classList.add('save-failed');
+        setTimeout(() => {
+            btn.classList.remove('save-failed');
+            i.className = btn._origIcon || 'fa-solid fa-floppy-disk';
+        }, 2000);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 消息过滤规则
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ND_DEFAULT_FILTER_RULES = [
+    { start: '<think>',    end: '</think>' },
+    { start: '<thinking>', end: '</thinking>' },
+    { start: '<system>',   end: '</system>' },
+    { start: '<meta>',     end: '</meta>' },
+    { start: '<options>',  end: '</options>' },
+    { start: '<WorldState>', end: '</WorldState>' },
+    { start: '<state>',    end: '</state>' },
+    { start: '<UpdateVariable>', end: '</UpdateVariable>' },
+    { start: '<—',         end: '—>' },
+    { start: '',           end: '</think>' },
+];
+
+function renderFilterRuleRow(rule, container) {
+    const row = document.createElement('div');
+    row.className = 'filter-rule-row';
+    row.innerHTML = `<input type="text" class="fr-start" placeholder="起始（可空）" value="${escapeHtml(rule.start || '')}">` +
+        `<span class="rule-arrow">→</span>` +
+        `<input type="text" class="fr-end" placeholder="结束（可空）" value="${escapeHtml(rule.end || '')}">` +
+        `<button class="btn-del-rule" title="删除">✕</button>`;
+    row.querySelector('.btn-del-rule').onclick = () => row.remove();
+    container.appendChild(row);
+}
+
+function renderFilterRules(rules) {
+    const list = $('nd_filter_rules_list');
+    if (!list) return;
+    list.innerHTML = '';
+    const arr = (Array.isArray(rules) && rules.length) ? rules : ND_DEFAULT_FILTER_RULES;
+    arr.forEach(r => renderFilterRuleRow(r, list));
+}
+
+function collectFilterRules() {
+    const rows = $$('#nd_filter_rules_list .filter-rule-row');
+    const rules = [];
+    rows.forEach(row => {
+        const start = row.querySelector('.fr-start')?.value || '';
+        const end = row.querySelector('.fr-end')?.value || '';
+        if (start || end) rules.push({ start, end });
+    });
+    return rules;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 角色列表
+// ═══════════════════════════════════════════════════════════════════════════
+
+function normalizeCharType(type) {
+    const knownTypes = new Set(CHARACTER_TYPES.filter(t => t.value !== 'custom').map(t => t.value));
+    return knownTypes.has(type) ? type : 'custom';
+}
+
+function getFilteredCharacters(chars = []) {
+    const query = String(charFilters.query || '').trim().toLowerCase();
+    const typeFilter = charFilters.type || 'all';
+    const statusFilter = charFilters.status || 'all';
+
+    return chars.filter(char => {
+        if (query) {
+            const haystack = [
+                char.name,
+                ...(char.aliases || []),
+                char.type,
+                char.appearance,
+                char.negativeTags,
+                char.danbooruTag,
+                ...((char.outfits || []).flatMap(outfit => [outfit?.name, outfit?.tags])),
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            if (!haystack.includes(query)) return false;
+        }
+
+        if (typeFilter !== 'all' && normalizeCharType(char.type || 'girl') !== typeFilter) {
+            return false;
+        }
+
+        if (statusFilter === 'complete' && !char.appearance) return false;
+        if (statusFilter === 'incomplete' && !!char.appearance) return false;
+        if (statusFilter === 'danbooru' && !char.danbooruTag) return false;
+        if (statusFilter === 'negative' && !char.negativeTags) return false;
+
+        return true;
+    });
+}
+
+function updateCharacterPanelMeta(allChars, filteredChars) {
+    const readyCount = allChars.filter(char => !!char.appearance).length;
+    const missingCount = allChars.length - readyCount;
+    const danbooruCount = allChars.filter(char => !!char.danbooruTag).length;
+    const filtersActive = !!String(charFilters.query || '').trim() || charFilters.type !== 'all' || charFilters.status !== 'all';
+
+    $('nd_char_stat_total').textContent = String(allChars.length);
+    $('nd_char_stat_ready').textContent = String(readyCount);
+    $('nd_char_stat_missing').textContent = String(missingCount);
+    $('nd_char_stat_danbooru').textContent = String(danbooruCount);
+    $('nd_char_result_count').textContent = `${filteredChars.length} / ${allChars.length}`;
+    $('nd_char_filter_summary').textContent = filtersActive
+        ? `筛选结果：显示 ${filteredChars.length} / ${allChars.length} 个角色`
+        : `当前显示全部 ${allChars.length} 个角色`;
+}
+
+function resetCharacterFilters(render = true) {
+    charFilters = { query: '', type: 'all', status: 'all' };
+    if ($('nd_char_search')) $('nd_char_search').value = '';
+    if ($('nd_char_filter_type')) $('nd_char_filter_type').value = 'all';
+    if ($('nd_char_filter_status')) $('nd_char_filter_status').value = 'all';
+    if (render) renderCharList();
+}
+
+function normalizeCharacterOutfitsForUI(outfits = []) {
+    return (Array.isArray(outfits) ? outfits : [])
+        .map(outfit => ({
+            name: String(outfit?.name || '').trim(),
+            tags: String(outfit?.tags || '').trim(),
+        }))
+        .filter(outfit => outfit.name || outfit.tags);
+}
+
+function renderOutfitEditorItem(outfit = {}, index = 0) {
+    return `
+    <div class="char-outfit-editor-item" data-index="${index}">
+        <div class="char-outfit-editor-header">
+            <div class="char-outfit-editor-title">服装 ${index + 1}</div>
+            <button class="btn btn-danger btn-sm" type="button" data-action="remove-outfit" data-index="${index}"><i class="fa-solid fa-trash"></i> 删除</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">服装名称</label>
+            <input type="text" class="input char-outfit-name" value="${escapeHtml(outfit.name || '')}" placeholder="如：常服、礼服、战斗服">
+        </div>
+        <div class="form-group">
+            <label class="form-label">服装 TAG</label>
+            <textarea class="input char-outfit-tags" placeholder="white shirt, black skirt, ribbon...">${escapeHtml(outfit.tags || '')}</textarea>
+        </div>
+    </div>`;
+}
+
+function syncOutfitEditorList(list) {
+    if (!list) return;
+    const rows = Array.from(list.querySelectorAll('.char-outfit-editor-item'));
+    const empty = list.querySelector('.char-outfit-editor-empty');
+    if (empty) empty.style.display = rows.length ? 'none' : 'block';
+    rows.forEach((row, index) => {
+        row.dataset.index = String(index);
+        row.querySelector('.char-outfit-editor-title').textContent = `服装 ${index + 1}`;
+        const removeBtn = row.querySelector('[data-action="remove-outfit"]');
+        if (removeBtn) removeBtn.dataset.index = String(index);
+    });
+}
+
+function collectOutfitEditorValues(card) {
+    return Array.from(card.querySelectorAll('.char-outfit-editor-item')).map(row => ({
+        name: row.querySelector('.char-outfit-name')?.value?.trim() || '',
+        tags: row.querySelector('.char-outfit-tags')?.value?.trim() || '',
+    })).filter(outfit => outfit.name || outfit.tags);
+}
+
+function renderCharList() {
+    const list = $('nd_char_list');
+    const empty = $('nd_char_empty');
+    const chars = state.characterTags || [];
+    const filteredChars = getFilteredCharacters(chars);
+
+    updateCharacterPanelMeta(chars, filteredChars);
+    
+    if (!chars.length) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+        empty.classList.remove('filtered');
+        empty.innerHTML = `
+            <i class="fa-solid fa-user-plus"></i>
+            <strong>暂无角色配置</strong>
+            <p>点击左侧“添加角色”，开始建立你的角色标签库</p>
+        `;
+        empty.style.display = 'block';
+        return;
+    }
+
+    if (!filteredChars.length) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+        empty.classList.add('filtered');
+        empty.innerHTML = `
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            <strong>没有匹配的角色</strong>
+            <p>试试调整搜索关键词或重置筛选条件</p>
+        `;
+        empty.style.display = 'block';
+        return;
+    }
+    
+    list.style.display = 'flex';
+    empty.style.display = 'none';
+    empty.classList.remove('filtered');
+    
+    list.innerHTML = filteredChars.map(c => {
+        const isEditing = editingCharId === c.id;
+        const typeLabel = CHARACTER_TYPES.find(t => t.value === c.type)?.label || c.type || 'girl';
+        const typeShort = typeLabel.split(' ')[0];
+        const appearance = c.appearance || '';
+        const outfits = normalizeCharacterOutfitsForUI(c.outfits);
+
+        if (isEditing) {
+            const typeOptions = CHARACTER_TYPES.map(t =>
+                `<option value="${t.value}"${t.value === (c.type || 'girl') ? ' selected' : ''}>${t.label}</option>`
+            ).join('');
+
+            return `
+            <div class="char-card editing" data-id="${c.id}">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <span class="char-emoji">${getCharEmoji(c.name)}</span>
+                    <span class="char-name">${escapeHtml(c.name || '新角色')}</span>
+                </div>
+                <div class="char-edit-form">
+                    <div class="char-edit-row">
+                        <div class="form-group">
+                            <label class="form-label">角色名称</label>
+                            <input type="text" class="input char-edit-name" value="${escapeHtml(c.name)}" placeholder="角色名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">类型</label>
+                            <select class="input char-edit-type">${typeOptions}</select>
+                            <input type="text" class="input char-edit-type-custom hidden" placeholder="如: mature female" style="margin-top:4px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">别名（逗号分隔）</label>
+                        <input type="text" class="input char-edit-aliases" value="${escapeHtml((c.aliases || []).join(', '))}" placeholder="小名, 昵称, ...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+                            外貌标签 (appearance)
+                            <button class="btn" data-action="search-danbooru" data-id="${c.id}" style="padding:2px 8px;font-size:10px;"${!state.danbooruLocalDB ? ' disabled style="opacity:0.3"' : ''}>
+                                <i class="fa-solid fa-magnifying-glass"></i> Danbooru
+                            </button>
+                        </label>
+                        <textarea class="input char-edit-appearance" placeholder="long hair, blue eyes, white dress">${escapeHtml(appearance)}</textarea>
+                        ${c.danbooruTag ? `<div class="form-hint" style="font-size:10px;color:var(--text-muted);margin:2px 0;">Danbooru: ${escapeHtml(c.danbooruTag.replace(/_/g, ' '))}</div>` : ''}
+                        <div class="danbooru-panel hidden" data-char-id="${c.id}"></div>
+                        <p class="form-hint">静态外貌描述，LLM 只需补充动作</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">负向标签（可选）</label>
+                        <textarea class="input char-edit-neg" placeholder="避免的特征...">${escapeHtml(c.negativeTags || '')}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <span>服装列表（可选）</span>
+                            <button class="btn btn-sm" type="button" data-action="add-outfit" data-id="${c.id}"><i class="fa-solid fa-plus"></i> 添加服装</button>
+                        </label>
+                        <div class="char-outfit-editor-list">
+                            <div class="char-outfit-editor-empty"${outfits.length ? ' style="display:none;"' : ''}>未配置服装时可留空；添加后会在生图规划时作为服装参考发送给 AI，由 AI 自行选择并按剧情改写当前服装 TAG。</div>
+                            ${outfits.map((outfit, index) => renderOutfitEditorItem(outfit, index)).join('')}
+                        </div>
+                        <p class="form-hint">示例：常服 / white shirt, pleated skirt；礼服 / evening dress, lace gloves</p>
+                    </div>
+                    <div class="btn-group" style="margin-top:12px;">
+                        <button class="btn btn-primary" data-action="save" data-id="${c.id}"><i class="fa-solid fa-check"></i> 保存</button>
+                        <button class="btn" data-action="cancel" data-id="${c.id}">取消</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        const statusParts = [];
+        if (appearance) statusParts.push('✅外貌');
+        else statusParts.push('⚠️未设置');
+        if (c.negativeTags) statusParts.push('❌neg');
+        if (c.danbooruTag) statusParts.push('🏷️db');
+        if (outfits.length) statusParts.push(`👗${outfits.length}套`);
+
+        return `
+        <div class="char-card" data-id="${c.id}">
+            <span class="char-emoji">${getCharEmoji(c.name)}</span>
+            <span class="char-name">${escapeHtml(c.name)}</span>
+            <span class="char-type-badge">${escapeHtml(typeShort)}</span>
+            <span class="char-status">${statusParts.join(' ')}</span>
+            <div class="char-actions">
+                <button data-action="fix-danbooru" data-id="${c.id}" title="Danbooru 修正"${!state.danbooruLocalDB ? ' disabled style="opacity:0.3"' : ''}>🔧</button>
+                <button data-action="search" data-id="${c.id}" title="Danbooru 标签搜索"${!state.danbooruLocalDB ? ' disabled style="opacity:0.3"' : ''}>🔍</button>
+                <button data-action="edit" data-id="${c.id}" title="编辑">✏️</button>
+                <button class="btn-danger" data-action="delete" data-id="${c.id}" title="删除">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
+    
+    list.querySelectorAll('.char-edit-type').forEach(sel => {
+        sel.addEventListener('change', function() {
+            const customInput = this.closest('.char-edit-form').querySelector('.char-edit-type-custom');
+            if (customInput) customInput.classList.toggle('hidden', this.value !== 'custom');
+        });
+    });
+
+    list.querySelectorAll('.char-outfit-editor-list').forEach(syncOutfitEditorList);
+}
+
+function handleCharAction(action, id, card, trigger) {
+    if (action === 'fix-danbooru' || action === 'search') {
+        if (!state.danbooruLocalDB) { alert('请先启用 Danbooru 本地资源库'); return; }
+        editingCharId = id;
+        renderCharList();
+        requestAnimationFrame(() => requestAnimationFrame(() => showLocalDanbooruFix(id)));
+    } else if (action === 'add-outfit') {
+        const list = card?.querySelector('.char-outfit-editor-list');
+        if (!list) return;
+        list.insertAdjacentHTML('beforeend', renderOutfitEditorItem({}, list.querySelectorAll('.char-outfit-editor-item').length));
+        syncOutfitEditorList(list);
+    } else if (action === 'remove-outfit') {
+        const row = trigger?.closest('.char-outfit-editor-item');
+        const list = row?.closest('.char-outfit-editor-list');
+        row?.remove();
+        syncOutfitEditorList(list);
+    } else if (action === 'search-danbooru') {
+        if (!state.danbooruLocalDB) { alert('请先启用 Danbooru 本地资源库'); return; }
+        showLocalDanbooruFix(id);
+    } else if (action === 'edit') {
+        editingCharId = id;
+        renderCharList();
+    } else if (action === 'cancel') {
+        editingCharId = null;
+        renderCharList();
+    } else if (action === 'save') {
+        const char = state.characterTags.find(c => c.id === id);
+        if (!char) return;
+        
+        const name = card.querySelector('.char-edit-name')?.value?.trim();
+        if (!name) { alert('请输入角色名称'); return; }
+        
+        const typeSelect = card.querySelector('.char-edit-type');
+        const typeCustom = card.querySelector('.char-edit-type-custom');
+        let type = typeSelect?.value || 'girl';
+        if (type === 'custom' && typeCustom?.value?.trim()) type = typeCustom.value.trim();
+        
+        char.name = name;
+        char.type = type;
+        char.aliases = (card.querySelector('.char-edit-aliases')?.value || '').split(/[,，]/).map(s => s.trim()).filter(Boolean);
+        char.appearance = card.querySelector('.char-edit-appearance')?.value?.trim() || '';
+        char.negativeTags = card.querySelector('.char-edit-neg')?.value?.trim() || '';
+        char.outfits = collectOutfitEditorValues(card);
+
+        editingCharId = null;
+        postToParent({ type: 'SAVE_CHARACTER_TAGS', characterTags: state.characterTags });
+        renderCharList();
+    } else if (action === 'delete') {
+        state.characterTags = state.characterTags.filter(c => c.id !== id);
+        postToParent({ type: 'SAVE_CHARACTER_TAGS', characterTags: state.characterTags });
+        renderCharList();
+    }
+}
+
+// ── Danbooru 搜索（本地 DB）─────────────────────────────────
+
+function showLocalDanbooruFix(charId) {
+    const panel = document.querySelector(`.danbooru-panel[data-char-id="${charId}"]`);
+    if (!panel) return;
+
+    const char = state.characterTags.find(c => c.id === charId);
+    const defaultQuery = char?.danbooruTag || char?.name || '';
+
+    panel.classList.remove('hidden');
+    panel.innerHTML = `
+        <div class="danbooru-search-row">
+            <input type="text" class="input danbooru-query" value="${escapeHtml(defaultQuery)}" placeholder="角色名搜索（本地库）">
+            <button class="btn btn-primary danbooru-search-btn"><i class="fa-solid fa-magnifying-glass"></i> 本地搜索</button>
+            <button class="btn danbooru-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="danbooru-results"></div>
+    `;
+
+    const input = panel.querySelector('.danbooru-query');
+    const searchBtn = panel.querySelector('.danbooru-search-btn');
+    const closeBtn = panel.querySelector('.danbooru-close-btn');
+
+    const doSearch = () => {
+        const q = input.value.trim();
+        if (!q) return;
+        panel.querySelector('.danbooru-results').innerHTML =
+            '<div class="danbooru-status"><i class="fa-solid fa-spinner fa-spin"></i> 本地搜索中...</div>';
+        postToParent({ type: 'DANBOORU_LOCAL_SEARCH', query: q, charId });
+    };
+
+    searchBtn.addEventListener('click', doSearch);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    closeBtn.addEventListener('click', () => {
+        panel.classList.add('hidden');
+        panel.innerHTML = '';
+    });
+
+    if (defaultQuery) doSearch();
+}
+
+function renderLocalDanbooruResults(query, results, charId) {
+    const panel = document.querySelector(`.danbooru-panel[data-char-id="${charId}"]`);
+    if (!panel) return;
+    const container = panel.querySelector('.danbooru-results');
+    if (!container) return;
+
+    if (!results?.length) {
+        container.innerHTML = '<div class="danbooru-status">本地库未找到匹配角色</div>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="danbooru-char-list">
+            ${results.map(r => {
+                const parsed = parseDanbooruCharName(r.name);
+                const tagPreview = (r.tags || []).slice(0, 6).map(t => t.replace(/_/g, ' ')).join(', ');
+                return `
+                <div class="danbooru-char-item local-fix" data-tag="${escapeHtml(r.name)}" data-tags="${escapeHtml(JSON.stringify(r.tags || []))}">
+                    <div class="danbooru-char-info">
+                        <span class="danbooru-char-name">${escapeHtml(parsed.charName)}</span>
+                        ${parsed.series ? `<span class="danbooru-char-series">${escapeHtml(parsed.series)}</span>` : ''}
+                    </div>
+                    ${tagPreview ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escapeHtml(tagPreview)}</div>` : ''}
+                </div>`;
+            }).join('')}
+        </div>
+    `;
+
+    container.querySelectorAll('.danbooru-char-item.local-fix').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagName = item.dataset.tag;
+            let appearanceTags = [];
+            try { appearanceTags = JSON.parse(item.dataset.tags); } catch {}
+
+            const char = state.characterTags.find(c => c.id === charId);
+            if (!char) return;
+
+            char.danbooruTag = tagName;
+            // 用本地库的 tag 替换角色外貌
+            if (appearanceTags.length) {
+                char.appearance = appearanceTags.map(t => t.replace(/_/g, ' ')).join(', ');
+            }
+
+            postToParent({ type: 'SAVE_CHARACTER_TAGS', characterTags: state.characterTags });
+            panel.classList.add('hidden');
+            panel.innerHTML = '';
+            editingCharId = null;
+            renderCharList();
+        });
+    });
+}
+
+function parseDanbooruCharName(tagName) {
+    const match = tagName.match(/^(.+?)_\((.+)\)$/);
+    if (match) return { charName: match[1].replace(/_/g, ' '), series: match[2].replace(/_/g, ' ') };
+    return { charName: tagName.replace(/_/g, ' '), series: '' };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 消息链可视化
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderPromptChain(chain) {
+    const container = $('nd_prompt_chain');
+    if (!container) return;
+
+    const editableMap = { topSystem: 'nd_prompt_system', userJsonFormat: 'nd_prompt_format' };
+
+    container.innerHTML = chain.map((item, i) => {
+        const varsHtml = (item.variables || []).map(v => `<span>📎 ${escapeHtml(v)}</span>`).join(' ');
+        const editIcon = item.editable ? ' <span class="chain-editable" title="可在上方编辑">✏️</span>' : '';
+        const labelSuffix = item.label ? ` <span class="chain-editable">[${escapeHtml(item.label)}]</span>` : '';
+
+        return `
+        <div class="chain-item" data-key="${escapeHtml(item.key)}" data-editable-id="${editableMap[item.key] || ''}">
+            <span class="chain-role ${item.role}">${item.role}</span>
+            <div class="chain-summary">
+                <div class="chain-summary-text">
+                    <span>${i + 1}. ${escapeHtml(item.summary)}${labelSuffix}${editIcon}</span>
+                </div>
+                ${varsHtml ? `<div class="chain-variables">${varsHtml}</div>` : ''}
+                <div class="chain-content-preview"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('.chain-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const editableId = el.dataset.editableId;
+            if (editableId) {
+                const target = $(editableId);
+                if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); target.focus(); return; }
+            }
+            const preview = el.querySelector('.chain-content-preview');
+            const isExpanded = el.classList.toggle('expanded');
+            if (isExpanded && !preview.dataset.loaded) {
+                preview.dataset.loaded = '1';
+                const key = el.dataset.key;
+                const defaults = state._defaultPrompts || {};
+                const configMap = {
+                    topSystem: defaults.topSystem,
+                    userJsonFormat: defaults.userJsonFormat,
+                };
+                const content = configMap[key] || '(内置模板，不可编辑)';
+                preview.textContent = content.length > 800 ? content.slice(0, 800) + '\n...(已截断)' : content;
+            }
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 画廊
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderGalleryView() {
+    const container = $('nd_gallery_container');
+    const empty = $('nd_gallery_empty');
+    const chars = Object.keys(gallerySummary);
+    
+    if (!chars.length) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+    
+    container.style.display = 'block';
+    empty.style.display = 'none';
+    
+    chars.sort((a, b) => (gallerySummary[b].latestTimestamp || 0) - (gallerySummary[a].latestTimestamp || 0));
+    
+    container.innerHTML = chars.map(charName => {
+        const charData = gallerySummary[charName];
+        const slotCount = Object.keys(charData.slots || {}).length;
+        const sizeMB = ((charData.totalSize || 0) / 1024 / 1024).toFixed(2);
+        
+        return `
+        <div class="gallery-char-section collapsed" data-char="${escapeHtml(charName)}">
+            <div class="gallery-char-header">
+                <div class="gallery-char-avatar">${getCharEmoji(charName)}</div>
+                <span class="gallery-char-name">${escapeHtml(charName)}</span>
+                <span class="gallery-char-stats">${charData.count || 0} 张 · ${slotCount} 组 · ${sizeMB} MB</span>
+                <i class="fa-solid fa-chevron-down gallery-char-toggle"></i>
+            </div>
+            <div class="gallery-slots" data-char="${escapeHtml(charName)}">
+                <div class="gallery-loading"><i class="fa-solid fa-spinner fa-spin"></i> 点击展开加载...</div>
+            </div>
+        </div>`;
+    }).join('');
+    
+    container.querySelectorAll('.gallery-char-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const section = header.closest('.gallery-char-section');
+            const charName = section.dataset.char;
+            const wasCollapsed = section.classList.contains('collapsed');
+            section.classList.toggle('collapsed');
+            
+            if (wasCollapsed && !loadedCharPreviews[charName]) {
+                const slotsDiv = section.querySelector('.gallery-slots');
+                slotsDiv.innerHTML = '<div class="gallery-loading"><i class="fa-solid fa-spinner fa-spin"></i> 加载中...</div>';
+                postToParent({ type: 'LOAD_CHARACTER_PREVIEWS', charName });
+            }
+        });
+    });
+}
+
+function renderCharacterSlots(charName, slots) {
+    const slotsContainer = document.querySelector(`.gallery-slots[data-char="${CSS.escape(charName)}"]`);
+    if (!slotsContainer) return;
+    
+    const slotEntries = Object.entries(slots || {});
+    if (!slotEntries.length) {
+        slotsContainer.innerHTML = '<div class="gallery-empty-hint">暂无图片</div>';
+        return;
+    }
+    
+    slotEntries.sort((a, b) => (b[1][0]?.timestamp || 0) - (a[1][0]?.timestamp || 0));
+    
+    slotsContainer.innerHTML = slotEntries.map(([slotId, images]) => {
+        const latest = images[0];
+        const hasSaved = images.some(img => img.savedUrl);
+        const imgSrc = getGalleryImageUrl(latest);
+
+        return `
+        <div class="gallery-slot" data-slot="${slotId}" data-char="${escapeHtml(charName)}">
+            <img class="gallery-slot-img" src="${escapeHtml(imgSrc)}" loading="lazy" decoding="async">
+            <div class="gallery-slot-overlay">
+                <div class="gallery-slot-actions">
+                    <button class="btn btn-sm" data-action="view" data-slot="${slotId}" data-char="${escapeHtml(charName)}">
+                        <i class="fa-solid fa-expand"></i> 查看
+                    </button>
+                </div>
+            </div>
+            <div class="gallery-slot-info">
+                <span>${new Date(latest.timestamp).toLocaleDateString()}</span>
+                <div style="display:flex;gap:4px;">
+                    ${images.length > 1 ? `<span class="gallery-slot-badge count">${images.length} 版</span>` : ''}
+                    ${hasSaved ? '<span class="gallery-slot-badge saved">✓</span>' : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+    
+    slotsContainer.querySelectorAll('[data-action="view"]').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); openGalleryModalFromCache(btn.dataset.char, btn.dataset.slot); });
+    });
+    slotsContainer.querySelectorAll('.gallery-slot').forEach(slot => {
+        slot.addEventListener('click', e => { if (!e.target.closest('[data-action]')) openGalleryModalFromCache(slot.dataset.char, slot.dataset.slot); });
+    });
+}
+
+function openGalleryModalFromCache(charName, slotId) {
+    const slots = loadedCharPreviews[charName];
+    if (!slots || !slots[slotId]) return;
+    modalData = { slotId, images: slots[slotId], currentIndex: 0, charName };
+    renderModalThumbs();
+    renderModalContent();
+    $('nd_gallery_modal').classList.add('visible');
+}
+
+function closeGalleryModal() {
+    $('nd_gallery_modal').classList.remove('visible');
+    modalData = { slotId: null, images: [], currentIndex: 0, charName: null };
+}
+
+function renderModalThumbs() {
+    const { images, currentIndex } = modalData;
+    if (!images.length) return;
+    $('nd_modal_thumbs').innerHTML = images.map((img, i) => {
+        const src = getGalleryImageUrl(img);
+        const cls = ['gallery-modal-thumb'];
+        if (i === currentIndex) cls.push('active');
+        if (img.savedUrl) cls.push('saved');
+        return `<img class="${cls.join(' ')}" src="${escapeHtml(src)}" data-index="${i}">`;
+    }).join('');
+    
+    $('nd_modal_thumbs').querySelectorAll('img').forEach(t => {
+        t.addEventListener('click', () => { modalData.currentIndex = parseInt(t.dataset.index); renderModalContent(); });
+    });
+}
+
+function updateModalThumbState() {
+    $('nd_modal_thumbs').querySelectorAll('img').forEach(t => {
+        const active = parseInt(t.dataset.index) === modalData.currentIndex;
+        t.classList.toggle('active', active);
+        if (active) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+}
+
+function renderModalContent() {
+    const { images, currentIndex } = modalData;
+    if (!images.length) return;
+    const current = images[currentIndex];
+    $('nd_modal_img').src = getGalleryImageUrl(current);
+    updateModalThumbState();
+    
+    const saveBtn = $('nd_modal_save');
+    if (current.savedUrl) {
+        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> 已保存';
+        saveBtn.disabled = true;
+    } else {
+        saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 保存到服务器';
+        saveBtn.disabled = false;
+    }
+    
+    $('nd_modal_info').textContent = `${currentIndex + 1} / ${images.length} · ${new Date(current.timestamp).toLocaleString()}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LLM 配置 UI
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateLlmProviderUI() {
+    const provider = $('nd_llm_provider').value;
+    const pv = providerDefaults[provider] || providerDefaults.st;
+    const isSt = provider === 'st';
+    const hasCache = (state.llmApi?.modelCache?.length || 0) > 0;
+    
+    $('nd_llm_url_row').classList.toggle('hidden', isSt);
+    $('nd_llm_key_row').classList.toggle('hidden', isSt);
+    $('nd_llm_model_manual_row').classList.toggle('hidden', isSt || !pv.needManualModel);
+    $('nd_llm_model_select_row').classList.toggle('hidden', isSt || pv.needManualModel || !hasCache);
+    $('nd_llm_connect_row').classList.toggle('hidden', isSt || !pv.canFetch);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 提示词模板始终可见
+// ═══════════════════════════════════════════════════════════════════════════
+
+function applyAdvancedMode() {
+    state.advancedMode = true;
+    document.body.classList.add('advanced-mode');
+
+    // 世界书
+    const wb = state.worldbooks || {};
+    $('nd_use_worldinfo').checked = state.useWorldInfo === true;
+    $('nd_wb_enabled').checked = wb.enabled === true;
+    $('nd_wb_filter_mode').value = wb.keywordFilterMode || 'auto';
+    renderUploadedBooks(wb.uploadedBooks || []);
+}
+
+/** 解析上传的世界书 JSON 文件 */
+function parseWorldbookJson(jsonText, fileName) {
+    const data = JSON.parse(jsonText);
+    if (!data.entries || typeof data.entries !== 'object') {
+        throw new Error('不是有效的世界书文件（缺少 entries 字段）');
+    }
+    const rawEntries = data.entries;
+    const entries = [];
+    for (const [uid, e] of Object.entries(rawEntries)) {
+        if (!e || typeof e !== 'object') continue;
+        const content = (e.content || '').trim();
+        if (!content) continue;
+        entries.push({
+            uid: Number(uid),
+            comment: e.comment || '',
+            key: Array.isArray(e.key) ? e.key : (e.key ? [e.key] : []),
+            keysecondary: Array.isArray(e.keysecondary) ? e.keysecondary : [],
+            constant: !!e.constant,
+            disable: !!e.disable,
+            content,
+            order: e.order ?? 100,
+        });
+    }
+    if (!entries.length) throw new Error('世界书中无有效条目（所有条目缺少 content）');
+    return { name: fileName, uploadedAt: Date.now(), entries };
+}
+
+/** 处理文件上传（支持多选） */
+async function handleWorldbookFiles(files) {
+    const uploaded = state.worldbooks?.uploadedBooks || [];
+    let added = 0;
+    const errors = [];
+
+    for (const file of files) {
+        if (!file.name.endsWith('.json')) {
+            errors.push(`${file.name}: 不是 .json 文件`);
+            continue;
+        }
+        try {
+            const text = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file);
+            });
+            const book = parseWorldbookJson(text, file.name);
+            // 同名替换
+            const idx = uploaded.findIndex(b => b.name === book.name);
+            if (idx >= 0) uploaded[idx] = book;
+            else uploaded.push(book);
+            added++;
+        } catch (e) {
+            errors.push(`${file.name}: ${e.message}`);
+        }
+    }
+
+    if (added > 0) {
+        state.worldbooks = { ...state.worldbooks, uploadedBooks: uploaded };
+        renderUploadedBooks(uploaded);
+        updateStatus($('nd_wb_status'), 'success', `已读取 ${added} 个世界书，请点击保存配置`);
+    }
+
+    if (errors.length) {
+        const container = $('nd_wb_entries');
+        container.innerHTML = `<p class="form-hint" style="color:var(--danger);">${errors.map(escapeHtml).join('<br>')}</p>`;
+        updateStatus($('nd_wb_status'), 'error', `有 ${errors.length} 个文件读取失败`);
+    }
+}
+
+function renderUploadedBooks(books) {
+    const container = $('nd_wb_uploaded_list');
+    if (!books.length) {
+        container.innerHTML = '<p class="form-hint">尚未上传世界书</p>';
+        return;
+    }
+    container.innerHTML = books.map((b, i) => {
+        const activeCount = b.entries.filter(e => !e.disable).length;
+        return `<div class="wb-book-item" data-index="${i}">
+            <span class="wb-book-name">${escapeHtml(b.name)}</span>
+            <span class="wb-book-count">${activeCount}/${b.entries.length} 条目</span>
+            <button class="wb-book-delete" data-index="${i}" title="移除"><i class="fa-solid fa-xmark"></i></button>
+        </div>`;
+    }).join('');
+
+    // 点击预览条目
+    container.querySelectorAll('.wb-book-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.wb-book-delete')) return;
+            const idx = Number(item.dataset.index);
+            const book = books[idx];
+            if (book) renderWorldbookEntriesLocal(book);
+        });
+    });
+
+    // 删除按钮
+    container.querySelectorAll('.wb-book-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = Number(btn.dataset.index);
+            const uploaded = state.worldbooks?.uploadedBooks || [];
+            uploaded.splice(idx, 1);
+            state.worldbooks = { ...state.worldbooks, uploadedBooks: uploaded };
+            renderUploadedBooks(uploaded);
+            $('nd_wb_entries').innerHTML = '<p class="form-hint">请先上传世界书</p>';
+            updateStatus($('nd_wb_status'), '', '已移除，请点击保存配置');
+        });
+    });
+}
+
+function renderLastLlmRequest(snapshot) {
+    const preview = $('nd_llm_request_preview');
+    if (!preview) return;
+    preview.textContent = snapshot
+        ? JSON.stringify(snapshot, null, 2)
+        : '暂无请求记录，请先触发一次画图分析。';
+}
+
+function renderWorldbookEntriesLocal(book) {
+    const container = $('nd_wb_entries');
+    const entries = book.entries || [];
+    if (!entries.length) {
+        container.innerHTML = `<p class="form-hint">${escapeHtml(book.name)}: 无条目</p>`;
+        return;
+    }
+    const lampIcon = { constant: 'constant', normal: 'normal', disabled: 'disabled' };
+    const lampLabel = { constant: '常驻', normal: '关键词触发', disabled: '已禁用' };
+    container.innerHTML = `<p class="form-hint" style="margin-bottom:8px;">${escapeHtml(book.name)} (${entries.length} 条)</p>` +
+        entries.map(e => {
+            let ls = 'normal';
+            if (e.disable) ls = 'disabled';
+            else if (e.constant) ls = 'constant';
+            const keys = (e.key || []).filter(Boolean).join(', ');
+            return `<div class="wb-entry-item">
+                <div class="wb-lamp ${lampIcon[ls]}" title="${lampLabel[ls]}"></div>
+                <div class="wb-entry-info">
+                    <div class="wb-entry-title">${escapeHtml(e.comment || '(未命名)')}</div>
+                    ${keys ? `<div class="wb-entry-keys">关键词: ${escapeHtml(keys)}</div>` : ''}
+                    <div class="wb-entry-preview">${escapeHtml((e.content || '').slice(0, 200))}</div>
+                </div>
+            </div>`;
+        }).join('');
+}
+
+function getCurrentLlmModel() {
+    const provider = $('nd_llm_provider').value;
+    const pv = providerDefaults[provider] || providerDefaults.st;
+    if (pv.needManualModel) return $('nd_llm_model_manual').value.trim();
+    else if (pv.canFetch) return $('nd_llm_model_select').value || '';
+    return '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 预设与设置
+// ═══════════════════════════════════════════════════════════════════════════
+
+function applyStateToUI() {
+    console.log('[ND-UI] applyStateToUI: autoLearn=%s, advMode=%s, presets=%d',
+        state.autoLearnCharacters, state.advancedMode, state.promptPresets?.length);
+    try {
+        updateBadge(state.enabled);
+        updateModeButtons(state.mode);
+        $('nd_show_floor').checked = state.showFloorButton !== false;
+        $('nd_show_floating').checked = state.showFloatingButton === true;
+
+        $('nd_api_key').value = state.apiKey || '';
+        $('nd_timeout').value = Math.round((state.timeout > 0 ? state.timeout : DEFAULTS.timeout) / 1000);
+        const dMin = state.requestDelay?.min > 0 ? state.requestDelay.min : DEFAULTS.requestDelay.min;
+        const dMax = state.requestDelay?.max > 0 ? state.requestDelay.max : DEFAULTS.requestDelay.max;
+        $('nd_delay').value = `${dMin}-${dMax}`;
+        $('nd_cache_days').value = state.cacheDays >= 1 ? state.cacheDays : DEFAULTS.cacheDays;
+        $('nd_cache_count').textContent = state.cacheStats?.count || 0;
+        $('nd_cache_size').textContent = (state.cacheStats?.sizeMB || 0) + ' MB';
+
+        const pSel = $('nd_params_preset');
+        pSel.innerHTML = (state.paramsPresets || []).map(p => `<option value="${p.id}">${escapeHtml(p.name || p.id)}</option>`).join('');
+        pSel.value = state.selectedParamsPresetId || '';
+
+        applyParamsPreset();
+
+        // 提示词预设下拉框 — 与参数预设完全一致的填充模式
+        const ppSel = $('nd_prompt_preset');
+        const presets = state.promptPresets || [];
+        ppSel.innerHTML = presets.map(p => `<option value="${p.id}">${escapeHtml(p.name || p.id)}</option>`).join('');
+        ppSel.value = state.selectedPromptPresetId || '';
+        applyPromptPreset();
+
+        applyLlmApi();
+        renderCharList();
+        renderGalleryView();
+        // auto-learn
+        $('nd_auto_learn').checked = !!state.autoLearnCharacters;
+        $('nd_auto_learn_update').checked = (state.autoLearnMode || 'new_only') === 'auto_update';
+        $('nd_auto_learn_sub').classList.toggle('hidden', !state.autoLearnCharacters);
+        $('nd_danbooru_local').checked = !!state.danbooruLocalDB;
+        $('nd_danbooru_local_sub').classList.toggle('hidden', !state.danbooruLocalDB);
+        $('nd_danbooru_local_status').textContent = state.danbooruLocalDB ? '已加载' : '未加载';
+        renderFilterRules(state.messageFilterRules);
+    } catch (e) {
+        console.error('[ND-UI] applyStateToUI 部分失败:', e);
+    }
+    // applyAdvancedMode 必须执行，不受上面异常影响
+    try {
+        applyAdvancedMode();
+    } catch (e) {
+        console.error('[ND-UI] applyAdvancedMode 失败:', e);
+    }
+}
+
+function applyParamsPreset() {
+    const p = state.paramsPresets.find(x => x.id === state.selectedParamsPresetId) || state.paramsPresets[0];
+    if (!p) return;
+
+    $('nd_positive').value = p.positivePrefix || '';
+    $('nd_negative').value = p.negativePrefix || '';
+    $('nd_max_images').value = p.maxImages || 0;
+    $('nd_max_chars').value = p.maxCharactersPerImage || 0;
+    
+    const pm = p.params || {};
+    const dp = DEFAULTS.params;
+    
+    setSelectOrCustom('model', pm.model || dp.model);
+    setSelectOrCustom('sampler', pm.sampler || dp.sampler);
+    setSelectOrCustom('scheduler', pm.scheduler || dp.scheduler);
+    
+    $('nd_steps').value = pm.steps ?? dp.steps;
+    $('nd_scale').value = pm.scale ?? dp.scale;
+    $('nd_seed').value = pm.seed ?? dp.seed;
+    $('nd_width').value = pm.width ?? dp.width;
+    $('nd_height').value = pm.height ?? dp.height;
+    updateSizePreset();
+    
+    $('nd_quality_toggle').value = (pm.qualityToggle ?? dp.qualityToggle) ? 'true' : 'false';
+    $('nd_auto_smea').value = (pm.autoSmea ?? dp.autoSmea) ? 'true' : 'false';
+    $('nd_uc_preset').value = pm.ucPreset ?? dp.ucPreset;
+    $('nd_cfg_rescale').value = pm.cfg_rescale ?? dp.cfg_rescale;
+    $('nd_variety_boost').checked = pm.variety_boost ?? dp.variety_boost;
+    $('nd_sm').checked = pm.sm ?? dp.sm;
+    $('nd_sm_dyn').checked = pm.sm_dyn ?? dp.sm_dyn;
+    $('nd_decrisper').checked = pm.decrisper ?? dp.decrisper;
+    
+    updateModelOptions();
+}
+
+/** 纯本地：从当前选中的提示词预设加载 textarea 内容（对标 applyParamsPreset） */
+function applyPromptPreset() {
+    const presets = state.promptPresets || [];
+    const active = presets.find(p => p.id === state.selectedPromptPresetId) || presets[0] || {};
+    $('nd_prompt_system').value = active.topSystem ?? '';
+    $('nd_prompt_guide').value = active.tagGuideContent ?? '';
+    $('nd_prompt_format').value = active.userJsonFormat ?? '';
+}
+
+function applyLlmApi() {
+    const api = state.llmApi || {};
+    const provider = providerDefaults[api.provider] ? api.provider : 'st';
+    const pv = providerDefaults[provider] || providerDefaults.st;
+    
+    $('nd_llm_provider').value = provider;
+    $('nd_llm_url').value = api.url || pv.url || '';
+    $('nd_llm_key').value = api.key || '';
+    $('nd_use_stream').checked = state.useStream !== false;
+    $('nd_disable_prefill').checked = state.disablePrefill === true;
+    if (pv.needManualModel) $('nd_llm_model_manual').value = api.model || '';
+    
+    const mc = api.modelCache || [];
+    const sel = $('nd_llm_model_select');
+    sel.innerHTML = mc.length > 0
+        ? mc.map(m => `<option value="${escapeHtml(m)}"${m === api.model ? ' selected' : ''}>${escapeHtml(m)}</option>`).join('')
+        : '<option value="">请先拉取模型列表</option>';
+    
+    updateLlmProviderUI();
+}
+
+function setSelectOrCustom(kind, value) {
+    const sel = $(`nd_${kind}_sel`);
+    const input = $(`nd_${kind}`);
+    const has = [...sel.options].some(o => o.value === value);
+    sel.value = has ? value : 'custom';
+    input.classList.toggle('hidden', sel.value !== 'custom');
+    input.value = value || '';
+}
+
+function updateSizePreset() {
+    const w = $('nd_width').value;
+    const h = $('nd_height').value;
+    const val = `${w}x${h}`;
+    const sel = $('nd_size_preset');
+    const has = [...sel.options].some(o => o.value === val);
+    sel.value = has ? val : 'custom';
+    $('nd_custom_size').classList.toggle('hidden', sel.value !== 'custom');
+}
+
+function updateModelOptions() {
+    const model = $('nd_model_sel').value === 'custom' ? $('nd_model').value : $('nd_model_sel').value;
+    const isV3 = model.includes('nai-diffusion-3') || model.includes('furry-3');
+    $('nd_v3_opts').classList.toggle('hidden', !isV3);
+}
+
+function collectParamsPreset() {
+    const p = state.paramsPresets.find(x => x.id === state.selectedParamsPresetId);
+    if (!p) return;
+
+    p.positivePrefix = $('nd_positive').value;
+    p.negativePrefix = $('nd_negative').value;
+    p.maxImages = Math.max(0, Number($('nd_max_images').value) || 0);
+    p.maxCharactersPerImage = Math.max(0, Number($('nd_max_chars').value) || 0);
+    p.params = p.params || {};
+    p.params.model = $('nd_model_sel').value === 'custom' ? $('nd_model').value : $('nd_model_sel').value;
+    p.params.sampler = $('nd_sampler_sel').value === 'custom' ? $('nd_sampler').value : $('nd_sampler_sel').value;
+    p.params.scheduler = $('nd_scheduler_sel').value === 'custom' ? $('nd_scheduler').value : $('nd_scheduler_sel').value;
+    p.params.steps = Number($('nd_steps').value) || 23;
+    p.params.scale = Number($('nd_scale').value) || 5;
+    p.params.seed = Number($('nd_seed').value);
+    p.params.width = Number($('nd_width').value) || 832;
+    p.params.height = Number($('nd_height').value) || 1216;
+    p.params.qualityToggle = $('nd_quality_toggle').value === 'true';
+    p.params.autoSmea = $('nd_auto_smea').value === 'true';
+    p.params.ucPreset = Number($('nd_uc_preset').value) || 0;
+    p.params.cfg_rescale = Number($('nd_cfg_rescale').value) || 0;
+    p.params.variety_boost = $('nd_variety_boost').checked;
+    p.params.sm = $('nd_sm').checked;
+    p.params.sm_dyn = $('nd_sm_dyn').checked;
+    p.params.decrisper = $('nd_decrisper').checked;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 消息处理
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Guarded by origin/source check.
+window.addEventListener('message', event => {
+    if (event.origin !== PARENT_ORIGIN || event.source !== window.parent) return;
+    const data = event.data;
+    if (!data || data.source !== 'LittleWhiteBox-NovelDraw') return;
+
+    switch (data.type) {
+        case 'INIT_DATA':
+            console.log('[ND-UI] INIT_DATA received — autoLearn=%s, advMode=%s, promptPresets:',
+                data.settings?.autoLearnCharacters, data.settings?.advancedMode,
+                JSON.stringify((data.settings?.promptPresets || []).map(p => p.name)));
+            state = { ...state, ...data.settings, cacheStats: data.cacheStats || state.cacheStats };
+            if (data.defaultPrompts) state._defaultPrompts = data.defaultPrompts;
+            gallerySummary = data.gallerySummary || {};
+            loadedCharPreviews = {};
+            applyStateToUI();
+            shuffleCredits();
+            break;
+
+        case 'CACHE_DATA':
+            state.cacheStats = data.cacheStats || state.cacheStats;
+            gallerySummary = data.gallerySummary || {};
+            if ($('nd_cache_count')) $('nd_cache_count').textContent = state.cacheStats?.count || 0;
+            if ($('nd_cache_size')) $('nd_cache_size').textContent = (state.cacheStats?.sizeMB || 0) + ' MB';
+            renderGalleryView();
+            break;
+
+        case 'CHARACTER_PREVIEWS_LOADED':
+            loadedCharPreviews[data.charName] = data.slots;
+            renderCharacterSlots(data.charName, data.slots);
+            break;
+            
+        case 'TEST_RESULT':
+            $('nd_preview_img').src = data.url;
+            $('nd_preview').classList.add('visible');
+            break;
+            
+        case 'STATUS':
+            if (data.target === 'worldbook') {
+                updateStatus($('nd_wb_status'), data.state, data.text);
+                if (data.state === 'success' || data.state === 'error') handleSaveResult(data.state === 'success');
+                break;
+            }
+            if (data.target === 'api') {
+                updateStatus($('nd_api_status'), data.state, data.text);
+            } else if (data.target === 'llm') {
+                updateStatus($('nd_llm_status'), data.state, data.text);
+            } else if (data.target === 'llm-fetch') {
+                updateStatus($('nd_llm_fetch_status'), data.state, data.text);
+            } else if (data.target === 'params') {
+                updateStatus($('nd_params_status'), data.state, data.text);
+            } else if (data.target === 'prompt-preset') {
+                updateStatus($('nd_prompt_preset_status'), data.state, data.text);
+            } else if (data.target === 'prompts') {
+                updateStatus($('nd_prompts_status'), data.state, data.text);
+            } else if (data.target === 'filter') {
+                updateStatus($('nd_filter_status'), data.state, data.text);
+            } else if (data.target === 'gallery') {
+                updateStatus($('nd_gallery_status'), data.state, data.text);
+            } else {
+                updateStatus($('nd_status'), data.state, data.text);
+            }
+            const fetchBtn = $('nd_llm_fetch');
+            if (fetchBtn?.disabled) {
+                fetchBtn.disabled = false;
+                fetchBtn.innerHTML = '<i class="fa-solid fa-plug"></i> 连接 / 拉取模型列表';
+            }
+            if (data.state === 'success' || data.state === 'error') handleSaveResult(data.state === 'success');
+            break;
+            
+        case 'GALLERY_IMAGE_DELETED':
+            if (modalData.charName && loadedCharPreviews[modalData.charName]) {
+                const slots = loadedCharPreviews[modalData.charName];
+                for (const slotId in slots) {
+                    slots[slotId] = slots[slotId].filter(img => img.imgId !== data.imgId);
+                    if (slots[slotId].length === 0) delete slots[slotId];
+                }
+                if (Object.keys(slots).length === 0) {
+                    delete loadedCharPreviews[modalData.charName];
+                    delete gallerySummary[modalData.charName];
+                    renderGalleryView();
+                } else {
+                    renderCharacterSlots(modalData.charName, slots);
+                }
+            }
+            if (modalData.slotId) {
+                modalData.images = modalData.images.filter(img => img.imgId !== data.imgId);
+                if (modalData.images.length === 0) closeGalleryModal();
+                else {
+                    if (modalData.currentIndex >= modalData.images.length) modalData.currentIndex = modalData.images.length - 1;
+                    renderModalThumbs();
+                    renderModalContent();
+                }
+            }
+            postToParent({ type: 'REFRESH_CACHE_STATS' });
+            break;
+            
+        case 'GALLERY_IMAGE_SAVED':
+            if (modalData.charName && loadedCharPreviews[modalData.charName]) {
+                for (const slotId in loadedCharPreviews[modalData.charName]) {
+                    const img = loadedCharPreviews[modalData.charName][slotId].find(i => i.imgId === data.imgId);
+                    if (img) {
+                        img.savedUrl = data.savedUrl;
+                        renderCharacterSlots(modalData.charName, loadedCharPreviews[modalData.charName]);
+                        break;
+                    }
+                }
+            }
+            if (modalData.slotId) {
+                const img = modalData.images.find(i => i.imgId === data.imgId);
+                if (img) { img.savedUrl = data.savedUrl; renderModalThumbs(); renderModalContent(); }
+            }
+            break;
+
+        case 'DANBOORU_LOCAL_SEARCH_RESULTS':
+            renderLocalDanbooruResults(data.query, data.results || [], data.charId);
+            break;
+
+        case 'PROMPT_CHAIN_DATA':
+            renderPromptChain(data.chain || []);
+            break;
+
+        case 'LAST_LLM_REQUEST_DATA':
+            renderLastLlmRequest(data.snapshot || null);
+            break;
+
+        case 'SYNC_SUMMARY_FILTER_RESULT': {
+            const incoming = Array.isArray(data.rules) ? data.rules : [];
+            if (!incoming.length) { alert('总结模块没有找到过滤规则'); break; }
+            const current = collectFilterRules();
+            const exists = new Set(current.map(r => `${r.start}\x00${r.end}`));
+            let added = 0;
+            const list = $('nd_filter_rules_list');
+            for (const r of incoming) {
+                const key = `${r.start || ''}\x00${r.end || ''}`;
+                if (!exists.has(key)) {
+                    renderFilterRuleRow({ start: r.start || '', end: r.end || '' }, list);
+                    exists.add(key);
+                    added++;
+                }
+            }
+            alert(added ? `已同步 ${added} 条新规则（需点保存生效）` : '没有新规则需要同步');
+            break;
+        }
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+    for (const url of previewObjectUrls.values()) {
+        try { URL.revokeObjectURL(url); } catch {}
+    }
+    previewObjectUrls.clear();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 初始化
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+    shuffleCredits();
+    // ═══════════════════════════════════════════════════════════════════════
+    // 导航切换
+    // ═══════════════════════════════════════════════════════════════════════
+    $$('.nav-item, .mobile-nav-item').forEach(item => item.addEventListener('click', () => switchView(item.dataset.view)));
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 模式切换
+    // ═══════════════════════════════════════════════════════════════════════
+    $$('.header-mode button').forEach(btn => btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        updateModeButtons(state.mode);
+        postToParent({ type: 'SAVE_MODE', mode: state.mode });
+    }));
+
+    $('nd_show_floor').addEventListener('change', () => {
+        postToParent({
+            type: 'SAVE_BUTTON_MODE',
+            showFloorButton: $('nd_show_floor').checked,
+            showFloatingButton: $('nd_show_floating').checked
+        });
+    });
+
+    $('nd_show_floating').addEventListener('change', () => {
+        postToParent({
+            type: 'SAVE_BUTTON_MODE',
+            showFloorButton: $('nd_show_floor').checked,
+            showFloatingButton: $('nd_show_floating').checked
+        });
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 关闭按钮
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_close').addEventListener('click', () => postToParent({ type: 'CLOSE' }));
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // API 配置
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_toggle_key').addEventListener('click', () => {
+        const i = $('nd_api_key');
+        const ic = $('nd_toggle_key').querySelector('i');
+        if (i.type === 'password') { i.type = 'text'; ic.className = 'fa-solid fa-eye-slash'; }
+        else { i.type = 'password'; ic.className = 'fa-solid fa-eye'; }
+    });
+    
+    $('nd_save_api').addEventListener('click', () => {
+        setSavingState($('nd_save_api'));
+        postToParent({
+            type: 'SAVE_API_CONFIG',
+            apiKey: $('nd_api_key').value.trim(),
+            timeout: Number($('nd_timeout').value) * 1000 || 180000,
+            requestDelay: parseDelay($('nd_delay').value)
+        });
+    });
+    
+    $('nd_test_api').addEventListener('click', () => postToParent({ type: 'TEST_API', apiKey: $('nd_api_key').value.trim() }));
+    
+    $('nd_test_single').addEventListener('click', () => postToParent({ type: 'TEST_SINGLE', tags: $('nd_test_tags').value }));
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 模型/采样器/调度器选择
+    // ═══════════════════════════════════════════════════════════════════════
+    ['model', 'sampler', 'scheduler'].forEach(k => {
+        $(`nd_${k}_sel`).addEventListener('change', function() {
+            $(`nd_${k}`).classList.toggle('hidden', this.value !== 'custom');
+            if (k === 'model') updateModelOptions();
+        });
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 尺寸预设
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_size_preset').addEventListener('change', function() {
+        if (this.value === 'custom') {
+            $('nd_custom_size').classList.remove('hidden');
+        } else {
+            const [w, h] = this.value.split('x');
+            $('nd_width').value = w;
+            $('nd_height').value = h;
+            $('nd_custom_size').classList.add('hidden');
+        }
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 参数预设管理
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_params_preset').addEventListener('change', () => { 
+        state.selectedParamsPresetId = $('nd_params_preset').value; 
+        applyParamsPreset(); 
+    });
+    
+    $('nd_params_save').addEventListener('click', () => {
+        setSavingState($('nd_params_save'));
+        collectParamsPreset();
+        postToParent({ type: 'SAVE_PARAMS_PRESET', selectedParamsPresetId: state.selectedParamsPresetId, paramsPresets: state.paramsPresets });
+    });
+    
+    $('nd_params_add').addEventListener('click', () => postToParent({ type: 'ADD_PARAMS_PRESET' }));
+    
+    $('nd_params_del').addEventListener('click', () => { 
+        if (confirm('确定删除当前参数预设？')) postToParent({ type: 'DEL_PARAMS_PRESET' }); 
+    });
+    
+    $('nd_params_rename').addEventListener('click', () => {
+        const p = state.paramsPresets.find(x => x.id === state.selectedParamsPresetId);
+        if (!p) return;
+        const name = prompt('输入新名称：', p.name || '');
+        if (name && name.trim()) {
+            p.name = name.trim();
+            postToParent({ type: 'SAVE_PARAMS_PRESET', selectedParamsPresetId: state.selectedParamsPresetId, paramsPresets: state.paramsPresets });
+        }
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 云端预设（新增）
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_params_cloud').addEventListener('click', () => {
+        postToParent({ type: 'OPEN_CLOUD_PRESETS' });
+    });
+    
+    $('nd_params_export').addEventListener('click', () => {
+        postToParent({ type: 'EXPORT_CURRENT_PRESET', presetId: state.selectedParamsPresetId });
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 角色标签
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_char_search').addEventListener('input', e => {
+        charFilters.query = e.target.value || '';
+        renderCharList();
+    });
+
+    $('nd_char_filter_type').addEventListener('change', e => {
+        charFilters.type = e.target.value || 'all';
+        renderCharList();
+    });
+
+    $('nd_char_filter_status').addEventListener('change', e => {
+        charFilters.status = e.target.value || 'all';
+        renderCharList();
+    });
+
+    $('nd_char_filter_reset').addEventListener('click', () => {
+        resetCharacterFilters();
+    });
+    
+    $('nd_char_add').addEventListener('click', () => {
+        const nc = { id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', aliases: [], type: 'girl', appearance: '', negativeTags: '', outfits: [] };
+        state.characterTags.push(nc);
+        editingCharId = nc.id;
+        resetCharacterFilters(false);
+        renderCharList();
+        switchView('characters');
+        setTimeout(() => document.querySelector('.char-edit-name')?.focus(), 50);
+    });
+    
+    $('nd_char_list').addEventListener('click', e => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const card = btn.closest('.char-card');
+        const id = btn.dataset.id || card?.dataset.id;
+        if (id) handleCharAction(btn.dataset.action, id, card, btn);
+    });
+
+    // auto-learn (toggle + subordinate checkbox)
+    $('nd_auto_learn').addEventListener('change', () => {
+        const enabled = $('nd_auto_learn').checked;
+        state.autoLearnCharacters = enabled; // 乐观更新，与 danbooruLocalDB 一致
+        $('nd_auto_learn_sub').classList.toggle('hidden', !enabled);
+        const mode = enabled && $('nd_auto_learn_update').checked ? 'auto_update' : 'new_only';
+        postToParent({ type: 'SAVE_AUTO_LEARN', autoLearnCharacters: enabled, autoLearnMode: mode });
+    });
+    $('nd_auto_learn_update').addEventListener('change', () => {
+        const mode = $('nd_auto_learn_update').checked ? 'auto_update' : 'new_only';
+        postToParent({ type: 'SAVE_AUTO_LEARN', autoLearnCharacters: $('nd_auto_learn').checked, autoLearnMode: mode });
+    });
+
+    $('nd_danbooru_local').addEventListener('change', () => {
+        const enabled = $('nd_danbooru_local').checked;
+        state.danbooruLocalDB = enabled; // 乐观更新，避免 toggle → 点击修正 之间的窗口期
+        $('nd_danbooru_local_sub').classList.toggle('hidden', !enabled);
+        if (enabled) $('nd_danbooru_local_status').textContent = '加载中...';
+        renderCharList(); // 立即刷新修正按钮状态
+        postToParent({ type: 'SAVE_DANBOORU_LOCAL_DB', enabled });
+    });
+
+    // clear all characters
+    $('nd_char_clear').addEventListener('click', () => {
+        if (!state.characterTags?.length) { alert('没有角色可清除'); return; }
+        if (!confirm(`确定清除全部 ${state.characterTags.length} 个角色？此操作不可撤销。`)) return;
+        state.characterTags = [];
+        postToParent({ type: 'SAVE_CHARACTER_TAGS', characterTags: state.characterTags });
+        renderCharList();
+    });
+    
+    $('nd_char_export').addEventListener('click', () => {
+        if (!state.characterTags?.length) { alert('没有可导出的角色'); return; }
+        const d = { type: 'novel-draw-characters', version: 3, characters: state.characterTags };
+        const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'character-tags.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+    
+    $('nd_char_import').addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const d = JSON.parse(text);
+            if (d.type !== 'novel-draw-characters' || !Array.isArray(d.characters)) throw new Error('无效文件');
+            for (const char of d.characters) {
+                if (!char.name) continue;
+                if (char.tags && !char.appearance) char.appearance = char.tags;
+                if (!char.type) char.type = 'girl';
+                
+                const ex = state.characterTags.find(c => c.name === char.name);
+                if (ex) Object.assign(ex, char, { id: ex.id });
+                else state.characterTags.push({ ...char, id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` });
+            }
+            postToParent({ type: 'SAVE_CHARACTER_TAGS', characterTags: state.characterTags });
+            renderCharList();
+            alert(`导入 ${d.characters.length} 个角色`);
+        } catch (err) {
+            alert('导入失败: ' + err.message);
+        }
+        e.target.value = '';
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LLM 配置
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_llm_provider').addEventListener('change', function() {
+        const pv = providerDefaults[this.value] || providerDefaults.st;
+        if (pv.url) $('nd_llm_url').value = pv.url;
+        if (!pv.canFetch) { state.llmApi = state.llmApi || {}; state.llmApi.modelCache = []; }
+        updateLlmProviderUI();
+    });
+    
+    $('nd_llm_fetch').addEventListener('click', () => {
+        const btn = $('nd_llm_fetch');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 连接中...';
+        postToParent({ type: 'FETCH_LLM_MODELS', llmApi: { provider: $('nd_llm_provider').value, url: $('nd_llm_url').value.trim(), key: $('nd_llm_key').value.trim() } });
+    });
+    
+    $('nd_llm_save').addEventListener('click', () => {
+        setSavingState($('nd_llm_save'));
+        postToParent({
+            type: 'SAVE_LLM_API',
+            llmApi: {
+                provider: $('nd_llm_provider').value,
+                url: $('nd_llm_url').value.trim(),
+                key: $('nd_llm_key').value.trim(),
+                model: getCurrentLlmModel(),
+                modelCache: state.llmApi?.modelCache || []
+            },
+            useStream: $('nd_use_stream').checked,
+            disablePrefill: $('nd_disable_prefill').checked
+        });
+    });
+    $('nd_llm_request_refresh').addEventListener('click', () => {
+        postToParent({ type: 'GET_LAST_LLM_REQUEST' });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 消息过滤规则
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_filter_add').addEventListener('click', () => {
+        renderFilterRuleRow({ start: '', end: '' }, $('nd_filter_rules_list'));
+    });
+    $('nd_filter_save').addEventListener('click', () => {
+        setSavingState($('nd_filter_save'));
+        const rules = collectFilterRules();
+        state.messageFilterRules = rules;
+        postToParent({ type: 'SAVE_MESSAGE_FILTER_RULES', rules });
+    });
+    $('nd_filter_sync').addEventListener('click', () => {
+        postToParent({ type: 'SYNC_SUMMARY_FILTER_RULES' });
+    });
+    $('nd_filter_reset').addEventListener('click', () => {
+        if (!confirm('确定恢复为默认过滤规则？当前未保存的修改将丢失。')) return;
+        renderFilterRules(ND_DEFAULT_FILTER_RULES);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 图片管理
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_save_cache_days').addEventListener('click', () => {
+        setSavingState($('nd_save_cache_days'));
+        postToParent({ type: 'SAVE_CACHE_DAYS', cacheDays: Number($('nd_cache_days').value) || 3 });
+    });
+    
+    $('nd_clear_expired').addEventListener('click', () => postToParent({ type: 'CLEAR_EXPIRED_CACHE' }));
+    
+    $('nd_clear_all').addEventListener('click', () => { 
+        if (confirm('确定清空全部图片记录？已保存到服务器的文件不会被删除。')) postToParent({ type: 'CLEAR_ALL_CACHE' }); 
+    });
+    
+    $('nd_refresh_stats').addEventListener('click', () => postToParent({ type: 'REFRESH_CACHE_STATS' }));
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 画廊弹窗
+    // ═══════════════════════════════════════════════════════════════════════
+    $('nd_modal_close').addEventListener('click', closeGalleryModal);
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && $('nd_gallery_modal').classList.contains('visible')) closeGalleryModal();
+    });
+
+    $('nd_gallery_modal').addEventListener('click', e => {
+        if (e.target.id === 'nd_gallery_modal') closeGalleryModal();
+    });
+    
+    $('nd_modal_use').addEventListener('click', () => {
+        if (!modalData.slotId || !modalData.images.length) return;
+        const c = modalData.images[modalData.currentIndex];
+        postToParent({ type: 'USE_GALLERY_IMAGE', slotId: modalData.slotId, imgId: c.imgId });
+        closeGalleryModal();
+    });
+    
+    $('nd_modal_save').addEventListener('click', () => {
+        if (!modalData.images.length) return;
+        const c = modalData.images[modalData.currentIndex];
+        if (c.savedUrl) return;
+        postToParent({ type: 'SAVE_GALLERY_IMAGE', imgId: c.imgId });
+    });
+    
+    $('nd_modal_delete').addEventListener('click', () => {
+        if (!modalData.images.length) return;
+        const c = modalData.images[modalData.currentIndex];
+        const msg = c.savedUrl ? '确定删除这条记录吗？服务器上的图片文件不会被删除。' : '确定删除这张图片吗？';
+        if (confirm(msg)) postToParent({ type: 'DELETE_GALLERY_IMAGE', imgId: c.imgId });
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 提示词预设管理 — 纯本地切换，与参数预设一致
+    $('nd_prompt_preset').addEventListener('change', () => {
+        state.selectedPromptPresetId = $('nd_prompt_preset').value;
+        applyPromptPreset();
+    });
+
+    $('nd_prompt_preset_save').addEventListener('click', () => {
+        setSavingState($('nd_prompt_preset_save'));
+        postToParent({ type: 'SAVE_PROMPT_PRESET', selectedPromptPresetId: state.selectedPromptPresetId, customPrompts: {
+            topSystem: $('nd_prompt_system').value,
+            tagGuideContent: $('nd_prompt_guide').value,
+            userJsonFormat: $('nd_prompt_format').value,
+        }, statusTarget: 'prompt-preset' });
+    });
+
+    $('nd_prompt_add').addEventListener('click', () => postToParent({ type: 'ADD_PROMPT_PRESET' }));
+
+    $('nd_prompt_del').addEventListener('click', () => {
+        if (confirm('确定删除当前提示词预设？')) postToParent({ type: 'DEL_PROMPT_PRESET' });
+    });
+
+    $('nd_prompt_rename').addEventListener('click', () => {
+        const p = (state.promptPresets || []).find(x => x.id === state.selectedPromptPresetId);
+        if (!p) return;
+        const name = prompt('输入新名称：', p.name || '');
+        if (name && name.trim()) {
+            postToParent({ type: 'RENAME_PROMPT_PRESET', name: name.trim() });
+        }
+    });
+
+    // 提示词模板保存（底部按钮，等同于预设栏保存）
+    $('nd_prompts_save').addEventListener('click', () => {
+        setSavingState($('nd_prompts_save'));
+        postToParent({ type: 'SAVE_PROMPT_PRESET', selectedPromptPresetId: state.selectedPromptPresetId, customPrompts: {
+            topSystem: $('nd_prompt_system').value,
+            tagGuideContent: $('nd_prompt_guide').value,
+            userJsonFormat: $('nd_prompt_format').value,
+        }, statusTarget: 'prompts' });
+    });
+
+    $('nd_prompt_reset_system').addEventListener('click', () => {
+        const activePreset = (state.promptPresets || []).find(p => p.id === state.selectedPromptPresetId);
+        const isPov = activePreset?.name === '默认-第一人称视角';
+        const defaultTopSystem = isPov ? (state._defaultPrompts?.topSystemPov || '') : (state._defaultPrompts?.topSystem || '');
+        $('nd_prompt_system').value = defaultTopSystem;
+        postToParent({ type: 'RESET_CUSTOM_PROMPT', key: 'topSystem', selectedPromptPresetId: state.selectedPromptPresetId });
+    });
+    $('nd_prompt_reset_guide').addEventListener('click', () => {
+        $('nd_prompt_guide').value = state._defaultPrompts?.tagGuideContent || '';
+        postToParent({ type: 'RESET_CUSTOM_PROMPT', key: 'tagGuideContent', selectedPromptPresetId: state.selectedPromptPresetId });
+    });
+    $('nd_prompt_reset_format').addEventListener('click', () => {
+        $('nd_prompt_format').value = state._defaultPrompts?.userJsonFormat || '';
+        postToParent({ type: 'RESET_CUSTOM_PROMPT', key: 'userJsonFormat', selectedPromptPresetId: state.selectedPromptPresetId });
+    });
+    $('nd_prompts_reset_all').addEventListener('click', () => {
+        if (!confirm('确认恢复全部提示词为默认值？')) return;
+        const defaults = state._defaultPrompts || {};
+        const activePreset = (state.promptPresets || []).find(p => p.id === state.selectedPromptPresetId);
+        const isPov = activePreset?.name === '默认-第一人称视角';
+        const topSystemVal = isPov ? (defaults.topSystemPov || '') : (defaults.topSystem || '');
+        $('nd_prompt_system').value = topSystemVal;
+        $('nd_prompt_guide').value = defaults.tagGuideContent || '';
+        $('nd_prompt_format').value = defaults.userJsonFormat || '';
+        postToParent({ type: 'SAVE_PROMPT_PRESET', selectedPromptPresetId: state.selectedPromptPresetId, customPrompts: {
+            topSystem: topSystemVal,
+            tagGuideContent: defaults.tagGuideContent || '',
+            userJsonFormat: defaults.userJsonFormat || '',
+        }, statusTarget: 'prompts' });
+    });
+
+    $('nd_prompts_export').addEventListener('click', () => {
+        const data = {
+            _type: 'novel-draw-prompt-template',
+            _version: 1,
+            topSystem: $('nd_prompt_system').value,
+            tagGuideContent: $('nd_prompt_guide').value,
+            userJsonFormat: $('nd_prompt_format').value,
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'novel-draw-prompts.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    $('nd_prompts_import').addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            if (data._type !== 'novel-draw-prompt-template') {
+                throw new Error('不是有效的提示词模板文件');
+            }
+            if (typeof data.topSystem === 'string') $('nd_prompt_system').value = data.topSystem;
+            if (typeof data.tagGuideContent === 'string') $('nd_prompt_guide').value = data.tagGuideContent;
+            if (typeof data.userJsonFormat === 'string') $('nd_prompt_format').value = data.userJsonFormat;
+            alert('导入成功，请点击「保存」以生效');
+        } catch (err) {
+            alert('导入失败: ' + err.message);
+        }
+        e.target.value = '';
+    });
+
+    // 消息链可视化
+    $('nd_chain_toggle').addEventListener('click', () => {
+        const container = $('nd_prompt_chain');
+        const icon = $('nd_chain_toggle').querySelector('.chain-toggle-icon');
+        const isOpen = container.classList.toggle('open');
+        icon.textContent = isOpen ? '▼ 收起' : '▶ 展开';
+        if (isOpen && !container.dataset.loaded) {
+            container.dataset.loaded = '1';
+            postToParent({ type: 'GET_PROMPT_CHAIN' });
+        }
+    });
+
+    // 世界书上传
+    const dropzone = $('nd_wb_dropzone');
+    const fileInput = $('nd_wb_file_input');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleWorldbookFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) handleWorldbookFiles(fileInput.files);
+        fileInput.value = '';
+    });
+
+    $('nd_wb_save').addEventListener('click', () => {
+        setSavingState($('nd_wb_save'));
+        const uploaded = state.worldbooks?.uploadedBooks || [];
+        postToParent({ type: 'SAVE_WORLDBOOK_CONFIG', worldbooks: {
+            enabled: $('nd_wb_enabled').checked,
+            uploadedBooks: uploaded,
+            keywordFilterMode: $('nd_wb_filter_mode').value || 'auto',
+        }, useWorldInfo: $('nd_use_worldinfo').checked });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 通知父窗口准备就绪
+    // ═══════════════════════════════════════════════════════════════════════
+    postToParent({ type: 'FRAME_READY' });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+/* ==================== 小白X AI画图 - 基础样式 ==================== */
+pre:has(+ .xiaobaix-iframe) {
+    display: none;
+}
+
+/* 设置 UI 组件样式 */
+.littlewhitebox-setting-row {
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.littlewhitebox-select-row {
+    flex-wrap: nowrap;
+}
+
+.littlewhitebox-compact-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.littlewhitebox-row-action {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.littlewhitebox-inline-action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+}
+
+.dbg-light {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.disabled-action {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.disabled-control {
+    opacity: 0.5;
+}
+
+.alignItemsCenter {
+    align-items: center;
+}
+
+.littlewhitebox-draw-settings-flex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 消息工具栏相关 */
+.xb-msg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
