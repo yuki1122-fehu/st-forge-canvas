@@ -229,13 +229,13 @@ class StorageFile {
     }
 }
 
-export const TasksStorage = new StorageFile('LittleWhiteBox_Tasks.json');
-export const StoryOutlineStorage = new StorageFile('LittleWhiteBox_StoryOutline.json');
-export const NovelDrawStorage = new StorageFile('LittleWhiteBox_NovelDraw.json', { debounceMs: 800 });
-export const SdDrawStorage = new StorageFile('LittleWhiteBox_SdDraw.json', { debounceMs: 800 });
-export const ComfyDrawStorage = new StorageFile('LittleWhiteBox_ComfyDraw.json', { debounceMs: 800 });
-export const AssistantStorage = new StorageFile('LittleWhiteBox_Assistant.json', { debounceMs: 800 });
-export const TtsStorage = new StorageFile('LittleWhiteBox_TTS.json', { debounceMs: 800 });
-export const EnaPlannerStorage = new StorageFile('LittleWhiteBox_EnaPlanner.json', { debounceMs: 800 });
-export const CommonSettingStorage = new StorageFile('LittleWhiteBox_CommonSettings.json', { debounceMs: 1000 });
-export const VectorStorage = new StorageFile('LittleWhiteBox_Vectors.json', { debounceMs: 3000 });
+export const TasksStorage = new StorageFile('rghx_Tasks.json');
+export const StoryOutlineStorage = new StorageFile('rghx_StoryOutline.json');
+export const NovelDrawStorage = new StorageFile('rghx_NovelDraw.json', { debounceMs: 800 });
+export const SdDrawStorage = new StorageFile('rghx_SdDraw.json', { debounceMs: 800 });
+export const ComfyDrawStorage = new StorageFile('rghx_ComfyDraw.json', { debounceMs: 800 });
+export const AssistantStorage = new StorageFile('rghx_Assistant.json', { debounceMs: 800 });
+export const TtsStorage = new StorageFile('rghx_TTS.json', { debounceMs: 800 });
+export const EnaPlannerStorage = new StorageFile('rghx_EnaPlanner.json', { debounceMs: 800 });
+export const CommonSettingStorage = new StorageFile('rghx_CommonSettings.json', { debounceMs: 1000 });
+export const VectorStorage = new StorageFile('rghx_Vectors.json', { debounceMs: 3000 });

@@ -10,7 +10,7 @@ import { createModuleEvents, event_types } from "../../../core/event-manager.js"
 
 const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
 const DRAW_IMAGE_HTML_REGEX = /<div\b[^>]*class=(["'])[^"']*\bxb-nd-img\b[^"']*\1[^>]*>[\s\S]*?<\/div>/gi;
-const DRAW_SAVED_EXTRA_KEY = 'xiaobaixDrawSaved';
+const DRAW_SAVED_EXTRA_KEY = 'rghxDrawSaved';
 const LEGACY_NOVEL_SAVED_EXTRA_KEY = 'novelDrawSaved';
 const INITIAL_RENDER_MESSAGE_LIMIT = 1;
 
@@ -96,14 +96,14 @@ export function stripDrawArtifactsFromChat(chat) {
 
 export function setupDrawGenerateInterceptor(options = {}) {
     const shouldStrip = typeof options.shouldStrip === 'function' ? options.shouldStrip : () => true;
-    globalThis.xiaobaixGenerateInterceptor = function (chat) {
+    globalThis.rghxGenerateInterceptor = function (chat) {
         if (!shouldStrip()) return;
         stripDrawArtifactsFromChat(chat);
     };
 }
 
 export function cleanupDrawGenerateInterceptor() {
-    delete globalThis.xiaobaixGenerateInterceptor;
+    delete globalThis.rghxGenerateInterceptor;
 }
 
 export function joinTags(...parts) {
@@ -324,9 +324,9 @@ export function classifyError(error) {
 }
 
 export function ensureDrawImageStyles() {
-    if (document.getElementById('xiaobaix-draw-image-styles')) return;
+    if (document.getElementById('rghx-draw-image-styles')) return;
     const style = document.createElement('style');
-    style.id = 'xiaobaix-draw-image-styles';
+    style.id = 'rghx-draw-image-styles';
     style.textContent = `
 .xb-nd-img{margin:0.8em 0;text-align:center;position:relative;display:block;width:100%;border-radius:14px;padding:4px}
 .xb-nd-img[data-state="preview"]{border:1px dashed rgba(255,152,0,0.35)}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>锻焰画匣 · ComfyUI</title>
+<title>熔光画匣 · ComfyUI</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -440,7 +440,7 @@ select.input { cursor: pointer; }
 }
 
 /* ═══════════════════════════════════════════════
-   锻焰画匣 · Forge Theme Additions
+   熔光画匣 · Forge Theme Additions
    ═══════════════════════════════════════════════ */
 /* Scrollbar - 黄铜圆角轨道 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -604,7 +604,7 @@ input, select, textarea {
                     <i class="fa-solid fa-lightbulb"></i>
                     <div>
                         <div>消息楼层按钮的 🎨 为对应消息生成配图。</div>
-                        <div>小白X会先分析当前楼层，再把结果组装成 ComfyUI 出图参数。</div>
+                        <div>熔光画匣会先分析当前楼层，再把结果组装成 ComfyUI 出图参数。</div>
                         <div>本页填写的参数和固定 TAG 会直接发给 ComfyUI API。</div>
                     </div>
                 </div>
@@ -765,7 +765,7 @@ input, select, textarea {
                                 <div class="form-group">
                                     <label class="form-label">工作流预览（只读）</label>
                                     <textarea id="comfy-builtin-workflow-preview" class="input" rows="10" readonly style="font-family:monospace;font-size:11px;"></textarea>
-                                    <p class="form-hint">这是小白X 简单模式实际发送给 ComfyUI 的工作流结构，帮助理解 ComfyUI 的工作原理。</p>
+                                    <p class="form-hint">这是熔光画匣 简单模式实际发送给 ComfyUI 的工作流结构，帮助理解 ComfyUI 的工作原理。</p>
                                 </div>
                             </div>
                         </div>
@@ -810,7 +810,7 @@ input, select, textarea {
 
                     <div class="card">
                         <div class="card-title">节点映射</div>
-                        <p class="form-hint" style="margin-bottom:12px;">告诉小白X 正向、负向、宽高、Seed 和最终出图分别对应哪个节点。节点 ID 可在 ComfyUI 里右键节点后查看。</p>
+                        <p class="form-hint" style="margin-bottom:12px;">告诉熔光画匣 正向、负向、宽高、Seed 和最终出图分别对应哪个节点。节点 ID 可在 ComfyUI 里右键节点后查看。</p>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">正向提示词节点 <span style="color:var(--danger);">*</span></label>
@@ -854,7 +854,7 @@ input, select, textarea {
                         <i class="fa-solid fa-lightbulb"></i>
                         <div>
                             <div style="font-weight:600;margin-bottom:4px;">自定义工作流模式说明</div>
-                            <div>采样器、Steps、CFG、随机种子等参数已经在你的工作流 JSON 里配置好了，小白X 只负责注入提示词和可选尺寸。</div>
+                            <div>采样器、Steps、CFG、随机种子等参数已经在你的工作流 JSON 里配置好了，熔光画匣 只负责注入提示词和可选尺寸。</div>
                         </div>
                     </div>
                 </div>
@@ -1136,7 +1136,7 @@ input, select, textarea {
             <section class="view wide" data-comfy-view-panel="characters">
                 <div class="view-header">
                     <h2 class="view-title">角色标签</h2>
-                    <p class="view-desc">这里直接维护小白X共用角色库，ComfyUI 出图会使用这里的角色外貌、服装参考和角色负向标签</p>
+                    <p class="view-desc">这里直接维护熔光画匣共用角色库，ComfyUI 出图会使用这里的角色外貌、服装参考和角色负向标签</p>
                 </div>
 
                 <div class="char-management-layout">
@@ -1196,7 +1196,7 @@ input, select, textarea {
             <section class="view wide" data-comfy-view-panel="gallery">
                 <div class="view-header">
                     <h2 class="view-title">图片管理</h2>
-                    <p class="view-desc">这里直接查看小白X共用图库，所有楼层配图都会保存在同一份缓存里。</p>
+                    <p class="view-desc">这里直接查看熔光画匣共用图库，所有楼层配图都会保存在同一份缓存里。</p>
                 </div>
 
                 <div class="card" style="margin-bottom:20px;">

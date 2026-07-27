@@ -227,7 +227,7 @@ if (typeof window !== "undefined") {
         },
         help: () =>
             console.log(`
-📊 小白X 事件管理器调试命令:
+📊 熔光画匣 事件管理器调试命令:
   xbEventCenter.stats()          - 查看所有模块的事件数量
   xbEventCenter.statsDetail()    - 查看所有模块监听的具体事件
   xbEventCenter.modules()        - 列出所有已注册模块

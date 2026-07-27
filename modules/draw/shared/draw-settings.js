@@ -1,7 +1,7 @@
 import { NovelDrawStorage } from "../../../core/server-storage.js";
 import { normalizeDrawLlmApi } from "./draw-llm.js";
 
-// 历史兼容：共享画图设置仍存放在 LittleWhiteBox_NovelDraw.json/settings。
+// 历史兼容：共享画图设置仍存放在 rghx_NovelDraw.json/settings。
 // 不改文件名，避免迁移用户数据；这里仅抽出 provider-neutral 字段读写。
 const SERVER_FILE_KEY = 'settings';
 export const DEFAULT_SHARED_GALLERY_CACHE_DAYS = 3;

@@ -373,7 +373,7 @@ function injectStyles() {
     if (stylesInjected) return;
     stylesInjected = true;
     const el = document.createElement('style');
-    el.id = 'xiaobaix-comfy-floating-style';
+    el.id = 'rghx-comfy-floating-style';
     el.textContent = STYLES;
     document.head.appendChild(el);
 }
@@ -887,7 +887,7 @@ function getFloatingPosition() {
         const raw = localStorage.getItem(FLOAT_POS_KEY);
         if (raw) return JSON.parse(raw);
     } catch {}
-    const debug = document.getElementById('xiaobaix-debug-mini');
+    const debug = document.getElementById('rghx-debug-mini');
     if (debug) {
         const r = debug.getBoundingClientRect();
         return { left: r.left, top: r.bottom + 8 };
@@ -1327,7 +1327,7 @@ export function destroyFloatingPanel() {
 
 export function destroyComfyDrawPanels() {
     destroyFloatingPanel();
-    document.getElementById('xiaobaix-comfy-floating-style')?.remove();
+    document.getElementById('rghx-comfy-floating-style')?.remove();
     stylesInjected = false;
 }
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>锻焰画匣 · NovelAI</title>
+<title>熔光画匣 · NovelAI</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -604,7 +604,7 @@ select.input { cursor: pointer; }
 }
 
 /* ═══════════════════════════════════════════════
-   锻焰画匣 · Forge Theme Additions
+   熔光画匣 · Forge Theme Additions
    ═══════════════════════════════════════════════ */
 /* Scrollbar - 黄铜圆角轨道 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -2681,7 +2681,7 @@ function collectParamsPreset() {
 window.addEventListener('message', event => {
     if (event.origin !== PARENT_ORIGIN || event.source !== window.parent) return;
     const data = event.data;
-    if (!data || data.source !== 'LittleWhiteBox-NovelDraw') return;
+    if (!data || data.source !== 'rghx-NovelDraw') return;
 
     switch (data.type) {
         case 'INIT_DATA':

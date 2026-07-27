@@ -122,7 +122,7 @@ const BUILTIN_WORKFLOW_TEMPLATE = {
     },
     "9": {
         "inputs": {
-            "filename_prefix": "LittleWhiteBox_Comfy",
+            "filename_prefix": "rghx_Comfy",
             "images": ["8", 0]
         },
         "class_type": "SaveImage"
@@ -209,7 +209,7 @@ const BUILTIN_WORKFLOWS = [
         name: '基础出图',
         family: 'simple',
         summary: '最稳的入门方案：选一个模型文件，直接文生图。',
-        description: '适合第一次跑通 ComfyUI。小白X 会把提示词、尺寸、采样参数填进内置工作流，并只返回预览图。',
+        description: '适合第一次跑通 ComfyUI。熔光画匣 会把提示词、尺寸、采样参数填进内置工作流，并只返回预览图。',
         recommended: {
             width: 512,
             height: 512,
@@ -1461,15 +1461,15 @@ async function generateComfyImageQueued({
 }
 
 function ensureStyles() {
-    if (document.getElementById('xiaobaix-comfy-draw-style')) return;
+    if (document.getElementById('rghx-comfy-draw-style')) return;
     const style = document.createElement('style');
-    style.id = 'xiaobaix-comfy-draw-style';
+    style.id = 'rghx-comfy-draw-style';
     style.textContent = `
-#xiaobaix-comfy-draw-overlay .comfy-draw-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:#0d1117}
-#xiaobaix-comfy-draw-overlay .comfy-draw-frame-wrap{position:absolute;z-index:1}
-#xiaobaix-comfy-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
-@media(min-width:769px){#xiaobaix-comfy-draw-overlay .comfy-draw-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#xiaobaix-comfy-draw-iframe{border-radius:12px}}
-@media(max-width:768px){#xiaobaix-comfy-draw-overlay .comfy-draw-frame-wrap{top:0;left:0;right:0;bottom:0}#xiaobaix-comfy-draw-iframe{border-radius:0}}
+#rghx-comfy-draw-overlay .comfy-draw-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:#0d1117}
+#rghx-comfy-draw-overlay .comfy-draw-frame-wrap{position:absolute;z-index:1}
+#rghx-comfy-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
+@media(min-width:769px){#rghx-comfy-draw-overlay .comfy-draw-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#rghx-comfy-draw-iframe{border-radius:12px}}
+@media(max-width:768px){#rghx-comfy-draw-overlay .comfy-draw-frame-wrap{top:0;left:0;right:0;bottom:0}#rghx-comfy-draw-iframe{border-radius:0}}
 `;
     document.head.appendChild(style);
 }
@@ -1482,7 +1482,7 @@ async function createOverlay() {
     ensureStyles();
 
     overlayElement = document.createElement('div');
-    overlayElement.id = 'xiaobaix-comfy-draw-overlay';
+    overlayElement.id = 'rghx-comfy-draw-overlay';
     overlayElement.style.cssText = `position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:${window.innerHeight}px!important;z-index:100002!important;display:none;overflow:hidden!important;`;
     const backdrop = document.createElement('div');
     backdrop.className = 'comfy-draw-backdrop';
@@ -1490,7 +1490,7 @@ async function createOverlay() {
     const frameWrap = document.createElement('div');
     frameWrap.className = 'comfy-draw-frame-wrap';
     overlayFrame = document.createElement('iframe');
-    overlayFrame.id = 'xiaobaix-comfy-draw-iframe';
+    overlayFrame.id = 'rghx-comfy-draw-iframe';
     overlayFrame.src = `${HTML_PATH}?v=${Date.now()}`;
     frameWrap.appendChild(overlayFrame);
     overlayElement.append(backdrop, frameWrap);
@@ -1526,7 +1526,7 @@ function syncOverlayHeight() {
 }
 
 function getSettingsDocument() {
-    return overlayFrame?.contentDocument || document.getElementById('xiaobaix-comfy-draw-iframe')?.contentDocument || null;
+    return overlayFrame?.contentDocument || document.getElementById('rghx-comfy-draw-iframe')?.contentDocument || null;
 }
 
 function getSettingsElement(id) {
@@ -1721,7 +1721,7 @@ function bindOverlayEvents() {
         }, '预设已保存', { notify: false, silent: false }), {
             statusElementId: 'comfy-draw-params-status',
             pendingText: '正在保存预设...',
-            successText: '预设已保存到小白X配置文件',
+            successText: '预设已保存到熔光画匣配置文件',
             errorText: '预设保存失败，请重试',
         });
         if (ok) fillForm(getSettings());
@@ -3472,7 +3472,7 @@ async function saveAllSettings({ notify = false, triggerButton = null, statusEle
         const ok = await runSaveButtonTask(triggerButton, saveTask, {
             statusElementId,
             pendingText: '正在保存...',
-            successText: '已保存到小白X服务端配置',
+            successText: '已保存到熔光画匣服务端配置',
             errorText: '保存失败，请重试',
             notify,
         });
@@ -3493,7 +3493,7 @@ async function saveAllSettings({ notify = false, triggerButton = null, statusEle
         updateStatusText(
             statusElementId,
             ok ? 'success' : 'error',
-            ok ? '已保存到小白X服务端配置' : '保存失败，请重试',
+            ok ? '已保存到熔光画匣服务端配置' : '保存失败，请重试',
         );
     }
 
@@ -5158,7 +5158,7 @@ export async function initComfyDraw() {
         renderExistingPanels();
     }, 300);
 
-    window.xiaobaixComfyDraw = {
+    window.rghxComfyDraw = {
         openSettings,
         getSettings,
         getQuickSettings,
@@ -5201,7 +5201,7 @@ export function cleanupComfyDraw() {
     overlayFrame = null;
     frameReadyPromise = null;
     eventsBound = false;
-    delete window.xiaobaixComfyDraw;
+    delete window.rghxComfyDraw;
     console.log('[ComfyDraw] 模块已清理');
 }
 

@@ -1,9 +1,9 @@
 /**
- * LittleWhiteBox 共享常量
+ * rghx 共享常量
  */
 
-export const EXT_ID = "LittleWhiteBox";
-export const EXT_NAME = "锻焰画匣";
+export const EXT_ID = "rghx";
+export const EXT_NAME = "熔光画匣";
 export const EXT_FOLDER_ID = (() => {
     try {
         const url = new URL(import.meta.url);

@@ -74,9 +74,9 @@ async function initActiveDrawProvider() {
 }
 
 function getProviderGenerateImagesFromText(provider) {
-    if (provider === 'novelai') return window.xiaobaixNovelDraw?.generateImagesFromText;
-    if (provider === 'sdwebui') return window.xiaobaixSdDraw?.generateImagesFromText;
-    if (provider === 'comfyui') return window.xiaobaixComfyDraw?.generateImagesFromText;
+    if (provider === 'novelai') return window.rghxNovelDraw?.generateImagesFromText;
+    if (provider === 'sdwebui') return window.rghxSdDraw?.generateImagesFromText;
+    if (provider === 'comfyui') return window.rghxComfyDraw?.generateImagesFromText;
     return null;
 }
 
@@ -96,7 +96,7 @@ function buildDrawPromptData(input = {}) {
     const charNegative = characterPrompts.map(item => item.uc).filter(Boolean).join(', ');
 
     if (provider === 'novelai') {
-        const novelDraw = window.xiaobaixNovelDraw;
+        const novelDraw = window.rghxNovelDraw;
         const novelSettings = novelDraw?.getSettings?.();
         const preset = novelSettings?.paramsPresets?.find(p => p.id === novelSettings.selectedParamsPresetId)
             || novelSettings?.paramsPresets?.[0];
@@ -111,7 +111,7 @@ function buildDrawPromptData(input = {}) {
     }
 
     if (provider === 'sdwebui') {
-        const sdDraw = window.xiaobaixSdDraw;
+        const sdDraw = window.rghxSdDraw;
         const sdSettings = sdDraw?.getSettings?.() || {};
         const effective = sdDraw?.getEffectiveParams?.(sdSettings, payload.params || {}) || {};
         return {
@@ -124,7 +124,7 @@ function buildDrawPromptData(input = {}) {
     }
 
     if (provider === 'comfyui') {
-        const comfyDraw = window.xiaobaixComfyDraw;
+        const comfyDraw = window.rghxComfyDraw;
         const comfySettings = comfyDraw?.getSettings?.() || {};
         const effective = comfyDraw?.getEffectiveParams?.(comfySettings, payload.params || {}) || {};
         return {
@@ -146,7 +146,7 @@ function buildDrawPromptData(input = {}) {
 }
 
 function installDrawFacade() {
-    window.xiaobaixDraw = {
+    window.rghxDraw = {
         getProvider() {
             return normalizeDrawProvider(settings.drawProvider);
         },
@@ -168,7 +168,7 @@ function installDrawFacade() {
             const promptData = buildDrawPromptData(payload);
 
             if (provider === 'novelai') {
-                const novelDraw = window.xiaobaixNovelDraw;
+                const novelDraw = window.rghxNovelDraw;
                 if (!novelDraw?.generateNovelImage) throw new Error('NovelAI 画图模块未初始化');
                 if (!promptData.hasParamsPreset) throw new Error('无可用的 NovelAI 参数预设');
                 return novelDraw.generateNovelImage({
@@ -180,7 +180,7 @@ function installDrawFacade() {
                 });
             }
             if (provider === 'sdwebui') {
-                const sdDraw = window.xiaobaixSdDraw;
+                const sdDraw = window.rghxSdDraw;
                 if (!sdDraw?.generateSdImage) throw new Error('SD WebUI 画图模块未初始化');
                 return sdDraw.generateSdImage({
                     prompt: promptData.positive || promptData.tags || '',
@@ -190,7 +190,7 @@ function installDrawFacade() {
                 });
             }
             if (provider === 'comfyui') {
-                const comfyDraw = window.xiaobaixComfyDraw;
+                const comfyDraw = window.rghxComfyDraw;
                 if (!comfyDraw?.generateComfyImage) throw new Error('ComfyUI 画图模块未初始化');
                 return comfyDraw.generateComfyImage({
                     prompt: promptData.positive || promptData.tags || '',
@@ -222,14 +222,14 @@ async function setupSettings() {
         }
         const response = await fetch(`${extensionFolderPath}/settings.html`);
         if (!response.ok) {
-            console.warn('[小白X画图] 设置模板加载失败，使用内联设置');
+            console.warn('[熔光画匣画图] 设置模板加载失败，使用内联设置');
             setupInlineSettings(settingsContainer);
             return;
         }
         const settingsHtml = await response.text();
         $(settingsContainer).append(settingsHtml);
 
-        const $provider = $("#xiaobaix_draw_provider");
+        const $provider = $("#rghx_draw_provider");
         if ($provider.length) {
             $provider.val(normalizeDrawProvider(settings.drawProvider)).on("change", async function () {
                 const prev = normalizeDrawProvider(settings.drawProvider);
@@ -244,14 +244,14 @@ async function setupSettings() {
             });
         }
 
-        $("#xiaobaix_draw_open_settings").on("click", function () {
+        $("#rghx_draw_open_settings").on("click", function () {
             const provider = normalizeDrawProvider(settings.drawProvider);
-            if (provider === 'novelai' && window.xiaobaixNovelDraw?.openSettings) {
-                window.xiaobaixNovelDraw.openSettings();
-            } else if (provider === 'sdwebui' && window.xiaobaixSdDraw?.openSettings) {
-                window.xiaobaixSdDraw.openSettings();
-            } else if (provider === 'comfyui' && window.xiaobaixComfyDraw?.openSettings) {
-                window.xiaobaixComfyDraw.openSettings();
+            if (provider === 'novelai' && window.rghxNovelDraw?.openSettings) {
+                window.rghxNovelDraw.openSettings();
+            } else if (provider === 'sdwebui' && window.rghxSdDraw?.openSettings) {
+                window.rghxSdDraw.openSettings();
+            } else if (provider === 'comfyui' && window.rghxComfyDraw?.openSettings) {
+                window.rghxComfyDraw.openSettings();
             } else if (provider === 'disabled') {
                 toastr?.warning?.('请先选择画图后端');
             } else {
@@ -259,7 +259,7 @@ async function setupSettings() {
             }
         });
     } catch (err) {
-        console.error('[小白X画图] 设置初始化失败:', err);
+        console.error('[熔光画匣画图] 设置初始化失败:', err);
     }
 }
 
@@ -267,21 +267,21 @@ function setupInlineSettings(container) {
     const html = [
         '<div class="inline-drawer">',
         '  <div class="inline-drawer-toggle inline-drawer-header">',
-        '    <b>小白X - AI画图</b>',
+        '    <b>熔光画匣 - AI画图</b>',
         '    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>',
         '  </div>',
         '  <div class="inline-drawer-content">',
         '    <div class="section-divider">画图后端<hr class="sysHR"></div>',
-        '    <div class="flex-container alignItemsCenter littlewhitebox-setting-row littlewhitebox-select-row">',
-        '      <label for="xiaobaix_draw_provider" class="has-tooltip"',
+        '    <div class="flex-container alignItemsCenter rghx-setting-row rghx-select-row">',
+        '      <label for="rghx_draw_provider" class="has-tooltip"',
         '             data-tooltip="选择画图渠道。使用 SD WebUI 时，需在详细设置里填写连接地址。">画图后端</label>',
-        '      <select id="xiaobaix_draw_provider" class="text_pole littlewhitebox-compact-select">',
+        '      <select id="rghx_draw_provider" class="text_pole rghx-compact-select">',
         '        <option value="disabled">关闭</option>',
         '        <option value="novelai">NovelAI</option>',
         '        <option value="sdwebui">SD WebUI</option>',
         '        <option value="comfyui">ComfyUI</option>',
         '      </select>',
-        '      <button id="xiaobaix_draw_open_settings" class="menu_button menu_button_icon littlewhitebox-row-action"',
+        '      <button id="rghx_draw_open_settings" class="menu_button menu_button_icon rghx-row-action"',
         '              type="button" title="打开画图详细设置">',
         '        <i class="fa-solid fa-palette"></i>',
         '        <small>画图设置</small>',
@@ -312,7 +312,7 @@ setupDrawGenerateInterceptor({ shouldStrip: () => true });
 ensureDrawImageStyles();
 
 jQuery(async () => {
-    console.log('[小白X画图] 插件加载中');
+    console.log('[熔光画匣画图] 插件加载中');
     try {
         const styleResp = await fetch(`${extensionFolderPath}/style.css`);
         if (styleResp.ok) {
@@ -320,13 +320,13 @@ jQuery(async () => {
             styleEl.textContent = await styleResp.text();
             document.head.appendChild(styleEl);
         }
-    } catch (e) { console.warn('[小白X画图] 样式加载失败:', e); }
+    } catch (e) { console.warn('[熔光画匣画图] 样式加载失败:', e); }
     await setupSettings();
     if (normalizeDrawProvider(settings.drawProvider) !== 'disabled') {
         try {
             await initActiveDrawProvider();
             startSharedDrawPreviewRuntime();
-        } catch (e) { console.error('[小白X画图] 初始化画图失败:', e); }
+        } catch (e) { console.error('[熔光画匣画图] 初始化画图失败:', e); }
     }
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, () => setTimeout(() => renderAllDrawPreviews(), 100));
     eventSource.on(event_types.USER_MESSAGE_RENDERED, () => setTimeout(() => renderAllDrawPreviews(), 100));

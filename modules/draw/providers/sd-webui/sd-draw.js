@@ -793,17 +793,17 @@ function classifySdError(message) {
 }
 
 function ensureStyles() {
-    if (document.getElementById('xiaobaix-sd-draw-style')) return;
+    if (document.getElementById('rghx-sd-draw-style')) return;
     const style = document.createElement('style');
-    style.id = 'xiaobaix-sd-draw-style';
+    style.id = 'rghx-sd-draw-style';
     // Keep overlay sizing in createOverlay()/syncOverlayHeight only.
     // Re-adding height:100vh on the overlay style broke the mobile bottom nav on SD settings.
     style.textContent = `
-#xiaobaix-sd-draw-overlay .sd-draw-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:#0d1117}
-#xiaobaix-sd-draw-overlay .sd-draw-frame-wrap{position:absolute;z-index:1}
-#xiaobaix-sd-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
-@media(min-width:769px){#xiaobaix-sd-draw-overlay .sd-draw-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#xiaobaix-sd-draw-iframe{border-radius:12px}}
-@media(max-width:768px){#xiaobaix-sd-draw-overlay .sd-draw-frame-wrap{top:0;left:0;right:0;bottom:0}#xiaobaix-sd-draw-iframe{border-radius:0}}
+#rghx-sd-draw-overlay .sd-draw-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:#0d1117}
+#rghx-sd-draw-overlay .sd-draw-frame-wrap{position:absolute;z-index:1}
+#rghx-sd-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
+@media(min-width:769px){#rghx-sd-draw-overlay .sd-draw-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#rghx-sd-draw-iframe{border-radius:12px}}
+@media(max-width:768px){#rghx-sd-draw-overlay .sd-draw-frame-wrap{top:0;left:0;right:0;bottom:0}#rghx-sd-draw-iframe{border-radius:0}}
 `;
     document.head.appendChild(style);
 }
@@ -816,7 +816,7 @@ async function createOverlay() {
     ensureStyles();
 
     overlayElement = document.createElement('div');
-    overlayElement.id = 'xiaobaix-sd-draw-overlay';
+    overlayElement.id = 'rghx-sd-draw-overlay';
     overlayElement.style.cssText = `position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:${window.innerHeight}px!important;z-index:100002!important;display:none;overflow:hidden!important;`;
     const backdrop = document.createElement('div');
     backdrop.className = 'sd-draw-backdrop';
@@ -824,7 +824,7 @@ async function createOverlay() {
     const frameWrap = document.createElement('div');
     frameWrap.className = 'sd-draw-frame-wrap';
     overlayFrame = document.createElement('iframe');
-    overlayFrame.id = 'xiaobaix-sd-draw-iframe';
+    overlayFrame.id = 'rghx-sd-draw-iframe';
     overlayFrame.src = `${HTML_PATH}?v=${Date.now()}`;
     frameWrap.appendChild(overlayFrame);
     overlayElement.append(backdrop, frameWrap);
@@ -860,7 +860,7 @@ function syncOverlayHeight() {
 }
 
 function getSettingsDocument() {
-    return overlayFrame?.contentDocument || document.getElementById('xiaobaix-sd-draw-iframe')?.contentDocument || null;
+    return overlayFrame?.contentDocument || document.getElementById('rghx-sd-draw-iframe')?.contentDocument || null;
 }
 
 function getSettingsElement(id) {
@@ -1043,7 +1043,7 @@ function bindOverlayEvents() {
         }, '预设已保存', { notify: false, silent: false }), {
             statusElementId: 'sd-draw-params-status',
             pendingText: '正在保存预设...',
-            successText: '预设已保存到小白X配置文件',
+            successText: '预设已保存到熔光画匣配置文件',
             errorText: '预设保存失败，请重试',
         });
         if (ok) fillForm(getSettings());
@@ -2397,7 +2397,7 @@ async function saveAllSettings({ notify = false, triggerButton = null, statusEle
         const ok = await runSaveButtonTask(triggerButton, saveTask, {
             statusElementId,
             pendingText: '正在保存...',
-            successText: '已保存到小白X服务端配置',
+            successText: '已保存到熔光画匣服务端配置',
             errorText: '保存失败，请重试',
             notify,
         });
@@ -2420,7 +2420,7 @@ async function saveAllSettings({ notify = false, triggerButton = null, statusEle
         updateStatusText(
             statusElementId,
             ok ? 'success' : 'error',
-            ok ? '已保存到小白X服务端配置' : '保存失败，请重试',
+            ok ? '已保存到熔光画匣服务端配置' : '保存失败，请重试',
         );
     }
 
@@ -4290,7 +4290,7 @@ export async function initSdDraw() {
         renderExistingPanels();
     }, 300);
 
-    window.xiaobaixSdDraw = {
+    window.rghxSdDraw = {
         openSettings,
         getSettings,
         getQuickSettings,
@@ -4335,7 +4335,7 @@ export function cleanupSdDraw() {
     overlayFrame = null;
     frameReadyPromise = null;
     eventsBound = false;
-    delete window.xiaobaixSdDraw;
+    delete window.rghxSdDraw;
     console.log('[SdDraw] 模块已清理');
 }
 

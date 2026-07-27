@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   锻焰画匣 · AI 画图 — Forge Theme
+   熔光画匣 · AI 画图 — Forge Theme
    Design System: 锻造工坊 · 暖铜拟物
    ｜ 暖铜/黄铜金属点缀 + 铆钉细节
    ｜ 深色锤纹质感 + 暖灰基底
@@ -7,7 +7,7 @@
    ═══════════════════════════════════════════════════════ */
 
 /* ── iframe 前文本隐藏 ── */
-pre:has(+ .xiaobaix-iframe) { display: none; }
+pre:has(+ .rghx-iframe) { display: none; }
 
 /* ── 设计 Token ── */
 .forge-theme {
@@ -30,8 +30,7 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
 }
 
 /* ── 设置面板 - 暖铜工坊抽屉 ── */
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider),
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) {
   background: linear-gradient(160deg,
     oklch(96.5% 0.014 88 / 0.9),
     oklch(93% 0.016 86 / 0.85));
@@ -42,14 +41,12 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   overflow: hidden;
   transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider):hover,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider):hover {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider):hover {
   box-shadow: 0 6px 24px rgba(166, 124, 74, 0.16), inset 0 1.5px 0 rgba(255,255,255,0.85);
 }
 
 /* 抽屉头部 - 黄铜铭牌 */
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header {
   position: relative;
   background:
     repeating-linear-gradient(90deg,
@@ -63,10 +60,8 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
 }
 
 /* 铆钉装饰 */
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header::before,
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header::after,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header::before,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header::after {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header::before,
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header::after {
   content: '';
   position: absolute;
   top: 8px;
@@ -76,14 +71,11 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   background: radial-gradient(circle at 35% 30%, #e8c88a, #d4a574 55%, #a67c4a);
   box-shadow: inset 0 -1px 2px rgba(80, 60, 40, 0.35), 0 1px 1px rgba(255,255,255,0.4);
 }
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header::before,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header::before { left: 10px; }
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header::after,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header::after { right: 10px; }
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header::before { left: 10px; }
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header::after { right: 10px; }
 
 /* 标题文字 - 金色渐变 */
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-header b,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-header b {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header b {
   background: linear-gradient(105deg, #a67c4a, #d4a574 55%, #e8c88a);
   -webkit-background-clip: text;
   background-clip: text;
@@ -94,16 +86,15 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
 }
 
 /* 展开图标 */
-#extensions_settings2 .inline-drawer:has(#xiaobaix_draw_provider) .inline-drawer-icon,
-#extensions_settings2 .inline-drawer:has(#n_draw_provider) .inline-drawer-icon {
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-icon {
   color: #d4a574;
   opacity: 0.7;
 }
 
 /* ── 设置行 - 锻造工坊控件 ── */
 .forge-setting-row,
-.littlewhitebox-setting-row,
-.littlewhitebox-select-row {
+.rghx-setting-row,
+.rghx-select-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -116,14 +107,14 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .forge-setting-row:hover,
-.littlewhitebox-setting-row:hover {
+.rghx-setting-row:hover {
   border-color: rgba(212, 165, 116, 0.25);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 2px 8px rgba(166, 124, 74, 0.10);
 }
 
 /* 选择框 - 锻压凹陷质感 */
 .forge-select,
-.littlewhitebox-compact-select {
+.rghx-compact-select {
   flex: 1;
   min-width: 0;
   padding: 6px 12px;
@@ -145,15 +136,14 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .forge-select:focus,
-.littlewhitebox-compact-select:focus {
+.rghx-compact-select:focus {
   border-color: #d4a574;
   box-shadow: inset 0 1px 2px rgba(166, 124, 74, 0.05), 0 0 0 3px rgba(212, 165, 116, 0.15);
 }
 
 /* 标签 - 锻造铭文 */
 .forge-label,
-#extensions_settings2 label[for="xiaobaix_draw_provider"],
-#extensions_settings2 label[for="n_draw_provider"] {
+#extensions_settings2 label[for="rghx_draw_provider"] {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -165,9 +155,8 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
 
 /* 操作按钮 - 黄铜锻造按钮 */
 .forge-btn,
-.littlewhitebox-row-action,
-#xiaobaix_draw_open_settings,
-#n_draw_open_settings {
+.rghx-row-action,
+#rghx_draw_open_settings {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -191,15 +180,13 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   overflow: hidden;
 }
 .forge-btn i,
-#xiaobaix_draw_open_settings i,
-#n_draw_open_settings i {
+#rghx_draw_open_settings i {
   font-size: 13px;
   filter: drop-shadow(0 1px 0 rgba(0,0,0,0.15));
 }
 .forge-btn:hover,
-.littlewhitebox-row-action:hover,
-#xiaobaix_draw_open_settings:hover,
-#n_draw_open_settings:hover {
+.rghx-row-action:hover,
+#rghx_draw_open_settings:hover {
   background: linear-gradient(165deg, #f0d49a 0%, #deb07e 45%, #b88a54 100%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.35),
@@ -208,16 +195,15 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   transform: translateY(-1px);
 }
 .forge-btn:active,
-.littlewhitebox-row-action:active,
-#xiaobaix_draw_open_settings:active,
-#n_draw_open_settings:active {
+.rghx-row-action:active,
+#rghx_draw_open_settings:active {
   box-shadow: inset 0 2px 4px rgba(80, 60, 40, 0.25), inset 0 -1px 0 rgba(255,255,255,0.15);
   transform: translateY(0);
 }
 
 /* ── 其他工具类 ── */
 .forge-inline-action-button,
-.littlewhitebox-inline-action-button {
+.rghx-inline-action-button {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -231,7 +217,7 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
   border: 1px solid rgba(212, 165, 116, 0.15);
 }
 .forge-inline-action-button:hover,
-.littlewhitebox-inline-action-button:hover {
+.rghx-inline-action-button:hover {
   background: rgba(212, 165, 116, 0.16);
   border-color: rgba(212, 165, 116, 0.3);
 }
@@ -256,13 +242,12 @@ pre:has(+ .xiaobaix-iframe) { display: none; }
 }
 
 .forge-flex-row,
-.littlewhitebox-draw-settings-flex-row {
+.rghx-draw-settings-flex-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.xb-msg-toolbar,
 .forge-msg-toolbar {
   display: flex;
   align-items: center;

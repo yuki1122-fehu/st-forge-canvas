@@ -203,9 +203,9 @@ let afterAiGateDispose = null;
 // ═══════════════════════════════════════════════════════════════════════════
 
 function ensureStyles() {
-    if (document.getElementById('xiaobaix-novel-draw-style')) return;
+    if (document.getElementById('rghx-novel-draw-style')) return;
     const style = document.createElement('style');
-    style.id = 'xiaobaix-novel-draw-style';
+    style.id = 'rghx-novel-draw-style';
     style.textContent = `
 .xb-nd-img{margin:0.8em 0;text-align:center;position:relative;display:block;width:100%;border-radius:14px;padding:4px}
 .xb-nd-img[data-state="preview"]{border:1px dashed rgba(255,152,0,0.35)}
@@ -255,11 +255,11 @@ function ensureStyles() {
 .xb-nd-remove-btn:hover{background:rgba(248,113,113,0.1)}
 @keyframes nd-slide-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(-10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
-#xiaobaix-novel-draw-overlay .nd-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7)}
-#xiaobaix-novel-draw-overlay .nd-frame-wrap{position:absolute;z-index:1}
-#xiaobaix-novel-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
-@media(min-width:769px){#xiaobaix-novel-draw-overlay .nd-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#xiaobaix-novel-draw-iframe{border-radius:12px}}
-@media(max-width:768px){#xiaobaix-novel-draw-overlay .nd-frame-wrap{top:0;left:0;right:0;bottom:0}#xiaobaix-novel-draw-iframe{border-radius:0}}
+#rghx-novel-draw-overlay .nd-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7)}
+#rghx-novel-draw-overlay .nd-frame-wrap{position:absolute;z-index:1}
+#rghx-novel-draw-iframe{width:100%;height:100%;border:none;background:#0d1117}
+@media(min-width:769px){#rghx-novel-draw-overlay .nd-frame-wrap{top:12px;left:12px;right:12px;bottom:12px}#rghx-novel-draw-iframe{border-radius:12px}}
+@media(max-width:768px){#rghx-novel-draw-overlay .nd-frame-wrap{top:0;left:0;right:0;bottom:0}#rghx-novel-draw-iframe{border-radius:0}}
 .xb-nd-edit-content{max-height:250px;overflow-y:auto;margin-bottom:8px}
 .xb-nd-edit-content::-webkit-scrollbar{width:4px}
 .xb-nd-edit-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px}
@@ -276,14 +276,14 @@ function ensureStyles() {
 }
 
 function syncOverlayHeight() {
-    const overlay = document.getElementById('xiaobaix-novel-draw-overlay');
+    const overlay = document.getElementById('rghx-novel-draw-overlay');
     if (!overlay) return;
     overlay.style.height = `${window.innerHeight}px`;
     syncOverlayFrameLayout();
 }
 
 function syncOverlayFrameLayout() {
-    const frameWrap = document.querySelector('#xiaobaix-novel-draw-overlay .nd-frame-wrap');
+    const frameWrap = document.querySelector('#rghx-novel-draw-overlay .nd-frame-wrap');
     if (!frameWrap) return;
     const inset = window.matchMedia?.('(max-width: 768px)')?.matches ? 0 : 12;
     frameWrap.style.top = `${inset}px`;
@@ -3177,7 +3177,7 @@ function createOverlay() {
     ensureStyles();
 
     const overlay = document.createElement('div');
-    overlay.id = 'xiaobaix-novel-draw-overlay';
+    overlay.id = 'rghx-novel-draw-overlay';
 
     overlay.style.cssText = `position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:${window.innerHeight}px!important;z-index:100002!important;display:none;overflow:hidden!important;`;
 
@@ -3201,7 +3201,7 @@ function createOverlay() {
     frameWrap.style.cssText = 'position:absolute;z-index:1;top:12px;left:12px;right:12px;bottom:12px;';
 
     const iframe = document.createElement('iframe');
-    iframe.id = 'xiaobaix-novel-draw-iframe';
+    iframe.id = 'rghx-novel-draw-iframe';
     iframe.src = `${HTML_PATH}?v=${Date.now()}`;
     iframe.style.cssText = 'width:100%;height:100%;border:none;background:#0d1117;display:block;';
 
@@ -3217,7 +3217,7 @@ function createOverlay() {
 
 function showOverlay() {
     if (!overlayCreated) createOverlay();
-    const overlay = document.getElementById('xiaobaix-novel-draw-overlay');
+    const overlay = document.getElementById('rghx-novel-draw-overlay');
     if (overlay) {
         overlay.style.display = 'block';
         syncOverlayHeight();
@@ -3227,7 +3227,7 @@ function showOverlay() {
 }
 
 function hideOverlay() {
-    const overlay = document.getElementById('xiaobaix-novel-draw-overlay');
+    const overlay = document.getElementById('rghx-novel-draw-overlay');
     if (overlay) overlay.remove();
     overlayCreated = false;
     frameReady = false;
@@ -3243,7 +3243,7 @@ function hideOverlay() {
 
 async function sendInitData() {
     console.log('[NovelDraw] sendInitData called');
-    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
+    const iframe = document.getElementById('rghx-novel-draw-iframe');
     if (!iframe?.contentWindow) { console.warn('[NovelDraw] sendInitData: no iframe'); return; }
     // Send the usable settings first; cache/gallery IndexedDB work can be slow for upgraded installs.
     const settings = getSettings();
@@ -3290,29 +3290,29 @@ async function sendInitData() {
         cacheStats: stats,
         gallerySummary,
     });
-    postToIframe(iframe, buildPayload(), 'LittleWhiteBox-NovelDraw');
+    postToIframe(iframe, buildPayload(), 'rghx-NovelDraw');
 
     let stats = { count: 0, sizeMB: 0 };
     let gallerySummary = {};
     try { stats = await getCacheStats(); } catch (e) { console.warn('[NovelDraw] getCacheStats failed:', e); }
     try { gallerySummary = await getGallerySummary(); } catch (e) { console.warn('[NovelDraw] getGallerySummary failed:', e); }
-    const currentIframe = document.getElementById('xiaobaix-novel-draw-iframe');
+    const currentIframe = document.getElementById('rghx-novel-draw-iframe');
     if (currentIframe?.contentWindow === iframe.contentWindow) {
         postToIframe(currentIframe, {
             type: 'CACHE_DATA',
             cacheStats: stats,
             gallerySummary,
-        }, 'LittleWhiteBox-NovelDraw');
+        }, 'rghx-NovelDraw');
     }
 }
 
 function postStatus(state, text, target = '') {
-    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-    if (iframe) postToIframe(iframe, { type: 'STATUS', state, text, target }, 'LittleWhiteBox-NovelDraw');
+    const iframe = document.getElementById('rghx-novel-draw-iframe');
+    if (iframe) postToIframe(iframe, { type: 'STATUS', state, text, target }, 'rghx-NovelDraw');
 }
 
 async function handleFrameMessage(event) {
-    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
+    const iframe = document.getElementById('rghx-novel-draw-iframe');
     if (!isTrustedMessage(event, iframe, 'NovelDraw-Frame')) return;
     const data = event.data;
     console.log('[NovelDraw] handleFrameMessage:', data.type);
@@ -3731,13 +3731,13 @@ async function handleFrameMessage(event) {
 
         case 'DANBOORU_LOCAL_SEARCH': {
             const results = searchLocalDanbooru(data.query || '', 10);
-            const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
+            const iframe = document.getElementById('rghx-novel-draw-iframe');
             if (iframe) postToIframe(iframe, {
                 type: 'DANBOORU_LOCAL_SEARCH_RESULTS',
                 query: data.query,
                 charId: data.charId,
                 results,
-            }, 'LittleWhiteBox-NovelDraw');
+            }, 'rghx-NovelDraw');
             break;
         }
 
@@ -3754,7 +3754,7 @@ async function handleFrameMessage(event) {
         }
 
         case 'SYNC_SUMMARY_FILTER_RULES': {
-            const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
+            const iframe = document.getElementById('rghx-novel-draw-iframe');
             if (!iframe) break;
             let summaryRules = [];
             try {
@@ -3767,7 +3767,7 @@ async function handleFrameMessage(event) {
             postToIframe(iframe, {
                 type: 'SYNC_SUMMARY_FILTER_RESULT',
                 rules: Array.isArray(summaryRules) ? summaryRules : [],
-            }, 'LittleWhiteBox-NovelDraw');
+            }, 'rghx-NovelDraw');
             break;
         }
 
@@ -3787,8 +3787,8 @@ async function handleFrameMessage(event) {
         case 'GET_PROMPT_CHAIN': {
             const { getPromptChainPreview } = await import('./novel-prompts.js');
             const chain = getPromptChainPreview(getSettings().customPrompts);
-            const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-            if (iframe) postToIframe(iframe, { type: 'PROMPT_CHAIN_DATA', chain }, 'LittleWhiteBox-NovelDraw');
+            const iframe = document.getElementById('rghx-novel-draw-iframe');
+            if (iframe) postToIframe(iframe, { type: 'PROMPT_CHAIN_DATA', chain }, 'rghx-NovelDraw');
             break;
         }
 
@@ -3797,7 +3797,7 @@ async function handleFrameMessage(event) {
                 postToIframe(iframe, {
                     type: 'LAST_LLM_REQUEST_DATA',
                     snapshot: getLastDrawLlmRequestSnapshot(),
-                }, 'LittleWhiteBox-NovelDraw');
+                }, 'rghx-NovelDraw');
             }
             break;
         }
@@ -3824,8 +3824,8 @@ async function handleFrameMessage(event) {
                 await updatePreviewSavedUrl(data.imgId, url);
                 if (Number.isFinite(preview.messageId)) await syncNovelDrawSavedFromPreview(preview.messageId, preview, { savedUrl: url });
                 {
-                    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-                    if (iframe) postToIframe(iframe, { type: 'GALLERY_IMAGE_SAVED', imgId: data.imgId, savedUrl: url }, 'LittleWhiteBox-NovelDraw');
+                    const iframe = document.getElementById('rghx-novel-draw-iframe');
+                    if (iframe) postToIframe(iframe, { type: 'GALLERY_IMAGE_SAVED', imgId: data.imgId, savedUrl: url }, 'rghx-NovelDraw');
                 }
                 sendInitData();
                 showToast(`已保存: ${url}`, 'success', 5000);
@@ -3842,8 +3842,8 @@ async function handleFrameMessage(event) {
                 if (!charName) break;
                 const slots = await getCharacterPreviews(charName);
                 {
-                    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-                    if (iframe) postToIframe(iframe, { type: 'CHARACTER_PREVIEWS_LOADED', charName, slots }, 'LittleWhiteBox-NovelDraw');
+                    const iframe = document.getElementById('rghx-novel-draw-iframe');
+                    if (iframe) postToIframe(iframe, { type: 'CHARACTER_PREVIEWS_LOADED', charName, slots }, 'rghx-NovelDraw');
                 }
             } catch (e) {
                 console.error('[NovelDraw] 加载预览失败:', e);
@@ -3855,8 +3855,8 @@ async function handleFrameMessage(event) {
             try {
                 await deletePreview(data.imgId);
                 {
-                    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-                    if (iframe) postToIframe(iframe, { type: 'GALLERY_IMAGE_DELETED', imgId: data.imgId }, 'LittleWhiteBox-NovelDraw');
+                    const iframe = document.getElementById('rghx-novel-draw-iframe');
+                    if (iframe) postToIframe(iframe, { type: 'GALLERY_IMAGE_DELETED', imgId: data.imgId }, 'rghx-NovelDraw');
                 }
                 sendInitData();
                 showToast('已删除');
@@ -3897,8 +3897,8 @@ async function handleFrameMessage(event) {
                 const scene = joinTags(preset?.positivePrefix, tags);
                 const base64 = await generateNovelImage({ scene, characterPrompts: [], negativePrompt: preset?.negativePrefix || '', params: preset?.params || {} });
                 {
-                    const iframe = document.getElementById('xiaobaix-novel-draw-iframe');
-                    if (iframe) postToIframe(iframe, { type: 'TEST_RESULT', url: `data:image/png;base64,${base64}` }, 'LittleWhiteBox-NovelDraw');
+                    const iframe = document.getElementById('rghx-novel-draw-iframe');
+                    if (iframe) postToIframe(iframe, { type: 'TEST_RESULT', url: `data:image/png;base64,${base64}` }, 'rghx-NovelDraw');
                 }
                 postStatus('success', `完成 ${((Date.now() - t0) / 1000).toFixed(1)}s`);
             } catch (e) {
@@ -4023,7 +4023,7 @@ export async function initNovelDraw() {
     // 全局 API
     // ════════════════════════════════════════════════════════════════════
 
-    window.xiaobaixNovelDraw = {
+    window.rghxNovelDraw = {
         getSettings,
         saveSettings,
         getQuickSettings,
@@ -4088,7 +4088,7 @@ export async function cleanupNovelDraw() {
         window.visualViewport?.removeEventListener('resize', overlayResizeHandler);
         overlayResizeHandler = null;
     }
-    document.getElementById('xiaobaix-novel-draw-overlay')?.remove();
+    document.getElementById('rghx-novel-draw-overlay')?.remove();
 
     // 动态导入并清理
     try {
@@ -4096,7 +4096,7 @@ export async function cleanupNovelDraw() {
         destroyFloatingPanel();
     } catch {}
 
-    delete window.xiaobaixNovelDraw;
+    delete window.rghxNovelDraw;
     delete window._xbNovelEventsBound;
 }
 

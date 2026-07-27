@@ -1030,7 +1030,7 @@ function getFloatingPosition() {
         if (raw) return JSON.parse(raw);
     } catch {}
 
-    const debug = document.getElementById('xiaobaix-debug-mini');
+    const debug = document.getElementById('rghx-debug-mini');
     if (debug) {
         const r = debug.getBoundingClientRect();
         return { left: r.left, top: r.bottom + 8 };

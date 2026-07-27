@@ -1,5 +1,5 @@
 {
-    "display_name": "小白X - AI画图",
+    "display_name": "熔光画匣 · AI 画图",
     "loading_order": 10,
     "requires": [],
     "optional": [],
@@ -8,5 +8,5 @@
     "author": "biex (extracted by Codex)",
     "version": "1.0.0",
     "homePage": "https://github.com/yuki1122-fehu/st-forge-canvas",
-    "generate_interceptor": "xiaobaixGenerateInterceptor"
+    "generate_interceptor": "rghxGenerateInterceptor"
 }
