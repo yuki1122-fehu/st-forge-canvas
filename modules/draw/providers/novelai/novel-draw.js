@@ -3931,7 +3931,6 @@ export async function openNovelDrawSettings() {
 }
 
 export async function initNovelDraw() {
-    if (window?.isXiaobaixEnabled === false) return;
     if (moduleInitialized) return;
 
     await loadPromptTemplates();
