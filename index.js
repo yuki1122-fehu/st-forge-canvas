@@ -12,6 +12,7 @@ import {
 } from "./modules/draw/providers/comfyui/comfy-draw.js";
 import {
     setupDrawGenerateInterceptor, cleanupDrawGenerateInterceptor,
+    startPlaceholderWatcher, stopPlaceholderWatcher,
     startSharedDrawPreviewRuntime, stopSharedDrawPreviewRuntime,
     renderAllDrawPreviews, insertPreviewIntoRenderedMessage,
     ensureDrawImageStyles,
@@ -326,10 +327,15 @@ jQuery(async () => {
         try {
             await initActiveDrawProvider();
             startSharedDrawPreviewRuntime();
+            startPlaceholderWatcher();
         } catch (e) { console.error('[熔光画匣画图] 初始化画图失败:', e); }
     }
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, () => setTimeout(() => renderAllDrawPreviews(), 100));
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, () => setTimeout(() => renderAllDrawPreviews(), 100));
+    function onMsgRender() { setTimeout(() => renderAllDrawPreviews(), 80); }
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMsgRender);
+    eventSource.on(event_types.USER_MESSAGE_RENDERED, onMsgRender);
+    eventSource.on(event_types.GENERATION_ENDED, () => setTimeout(() => renderAllDrawPreviews(), 500));
+    eventSource.on(event_types.MESSAGE_UPDATED, () => setTimeout(() => renderAllDrawPreviews(), 300));
+    eventSource.on(event_types.MESSAGE_SWIPED, () => setTimeout(() => renderAllDrawPreviews(), 300));
     eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(() => renderAllDrawPreviews(), 200));
 });
 

@@ -1,14 +1,21 @@
-import { getContext } from "../../../../../../extensions.js";
 import {
+    startPlaceholderWatcher, stopPlaceholderWatcher, getContext } from "../../../../../../extensions.js";
+import {
+    startPlaceholderWatcher, stopPlaceholderWatcher,
     getDisplayPreviewForSlot,
     getPreviewsBySlot,
     getPreviewDisplayUrl,
     warmSlotPreviewNeighbors,
 } from "./gallery-cache.js";
-import { LLMServiceError } from "./scene-planner.js";
-import { createModuleEvents, event_types } from "../../../core/event-manager.js";
+import {
+    startPlaceholderWatcher, stopPlaceholderWatcher, LLMServiceError } from "./scene-planner.js";
+import {
+    startPlaceholderWatcher, stopPlaceholderWatcher, createModuleEvents, event_types } from "../../../core/event-manager.js";
 
 const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
+// Full-width variant: ST may convert [image:slot] to 【image：slot】 during formatting
+const DOM_PLACEHOLDER_REGEX = /[[【]\s*image\s*[：:]\s*([a-z0-9\-_]+)\s*[]】]/gi;
+
 const DRAW_IMAGE_HTML_REGEX = /<div\b[^>]*class=(["'])[^"']*\bxb-nd-img\b[^"']*\1[^>]*>[\s\S]*?<\/div>/gi;
 const DRAW_SAVED_EXTRA_KEY = 'rghxDrawSaved';
 const LEGACY_NOVEL_SAVED_EXTRA_KEY = 'novelDrawSaved';
@@ -58,6 +65,11 @@ export function createPlaceholder(slotId) {
     return `[image:${slotId}]`;
 }
 
+
+/** Full-width placeholder for DOM matching (ST may convert brackets during formatting) */
+function createDOMPlaceholder(slotId) {
+    return `【image：${slotId}】`;
+}
 function stripDrawImageHtml(text) {
     const value = String(text || '');
     if (!value.includes('xb-nd-img')) return value;
@@ -424,7 +436,14 @@ ${menuHtml}
 
 function getMesTextElement(messageId) {
     if (!Number.isFinite(messageId)) return null;
-    return document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text`);
+    const primary = document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text`);
+    if (primary) return primary;
+    const fallback = document.querySelector(`.mes[mesid="${messageId}"] .mes_text`);
+    if (fallback) {
+        console.debug('[DrawCommon] getMesTextElement fallback (no #chat container) for mesid:', messageId);
+        return fallback;
+    }
+    return document.querySelector(`[mesid="${messageId}"] .mes_text`);
 }
 
 function isMessageBeingEdited(messageId) {
@@ -601,7 +620,12 @@ function replacePlaceholdersInDomBatch(root, replacements) {
     );
     if (pending.length === 0) return new Set();
 
-    const placeholderMap = new Map(pending.map(item => [createPlaceholder(item.slotId), item]));
+    // Map both half-width and full-width placeholders to the same patch
+    const placeholderMap = new Map();
+    pending.forEach(item => {
+        placeholderMap.set(createPlaceholder(item.slotId), item);
+        placeholderMap.set(createDOMPlaceholder(item.slotId), item);
+    });
     const placeholderRegex = new RegExp(Array.from(placeholderMap.keys()).map(escapeRegexChars).join('|'), 'g');
     const resolvedSlotIds = new Set();
     const nodePlans = new Map();
@@ -855,9 +879,11 @@ export async function renderPreviewsForMessage(messageId) {
     let fallbackReplaced = false;
     for (const item of pendingFallback) {
         const placeholder = createPlaceholder(item.slotId);
+        const domPlaceholder = createDOMPlaceholder(item.slotId);
         const escapedPlaceholder = placeholder.replace(/[[\]]/g, '\\$&');
-        if (!new RegExp(escapedPlaceholder).test(html)) continue;
-        html = html.replace(new RegExp(escapedPlaceholder, 'g'), item.html);
+        const escapedDomPlaceholder = escapeRegexChars(domPlaceholder);
+        if (!new RegExp(`${escapedPlaceholder}|${escapedDomPlaceholder}`).test(html)) continue;
+        html = html.replace(new RegExp(`${escapedPlaceholder}|${escapedDomPlaceholder}`, 'g'), item.html);
         fallbackReplaced = true;
     }
 
@@ -997,4 +1023,51 @@ export function stopSharedDrawPreviewRuntime() {
     drawPreviewRuntimeGeneration++;
     clearPendingDrawPreviewTimers();
     cleanupDrawPreviewMessageObserver();
+}
+
+// ── 定期占位符检查器 ──────────────────────────────────────────
+let placeholderWatcherInterval = null;
+let placeholderWatcherAttempts = 0;
+const PLACEHOLDER_WATCHER_MAX_ATTEMPTS = 30;
+const PLACEHOLDER_WATCHER_INTERVAL = 2000;
+
+export function startPlaceholderWatcher() {
+    if (placeholderWatcherInterval) return;
+    placeholderWatcherAttempts = 0;
+    placeholderWatcherInterval = setInterval(() => {
+        placeholderWatcherAttempts++;
+        if (placeholderWatcherAttempts > PLACEHOLDER_WATCHER_MAX_ATTEMPTS) {
+            stopPlaceholderWatcher();
+            return;
+        }
+        const ctx = getContext();
+        const chat = ctx.chat || [];
+        let hasUnrendered = false;
+        for (let i = 0; i < chat.length; i++) {
+            const mes = chat[i]?.mes;
+            if (!mes) continue;
+            if (!PLACEHOLDER_REGEX.test(mes)) continue;
+            PLACEHOLDER_REGEX.lastIndex = 0;
+            const mesTextEl = document.querySelector(`.mes[mesid="${i}"] .mes_text`);
+            if (!mesTextEl) continue;
+            if (mesTextEl.querySelector('.xb-nd-img')) continue;
+            const textContent = mesTextEl.textContent || '';
+            if (!textContent.includes('[image:') && !textContent.includes('【image')) continue;
+            hasUnrendered = true;
+            renderPreviewsForMessage(i).catch(e => {
+                console.warn('[DrawCommon] 周期性渲染失败:', i, e);
+            });
+        }
+        if (!hasUnrendered) {
+            stopPlaceholderWatcher();
+        }
+    }, PLACEHOLDER_WATCHER_INTERVAL);
+}
+
+export function stopPlaceholderWatcher() {
+    if (placeholderWatcherInterval) {
+        clearInterval(placeholderWatcherInterval);
+        placeholderWatcherInterval = null;
+    }
+    placeholderWatcherAttempts = 0;
 }

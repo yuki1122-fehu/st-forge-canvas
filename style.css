@@ -270,3 +270,201 @@ pre:has(+ .rghx-iframe) { display: none; }
   background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.3), transparent);
   margin: 4px 0;
 }
+
+/* ═══════════════════════════════════════════════════════
+   熔光画匣 · 锻冶余烬动画系统
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 锻冶余烬动画 ── */
+@keyframes forgeEmberRise {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0.9; }
+  50%  { transform: translateY(-50px) scale(1.0); opacity: 0.5; }
+  100% { transform: translateY(-100px) scale(0.3); opacity: 0; }
+}
+
+.forge-ember-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.forge-ember {
+  position: absolute;
+  bottom: -6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #e8c88a;
+  box-shadow: 0 0 6px rgba(232, 200, 138, 0.8), 0 0 12px rgba(224, 90, 44, 0.4);
+  animation: forgeEmberRise var(--ember-dur, 3s) ease-out infinite;
+  animation-delay: var(--ember-delay, 0s);
+  left: var(--ember-x, 50%);
+  opacity: 0;
+}
+
+/* ── 黄铜流光动画 ── */
+@keyframes brassShimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.forge-glow-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.forge-glow-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232, 200, 138, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 30% 100%, rgba(224, 90, 44, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 70% 100%, rgba(212, 165, 116, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── 锻工面板 · 锤纹背景 ── */
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 14px,
+      rgba(212, 165, 116, 0.015) 14px,
+      rgba(212, 165, 116, 0.015) 15px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 14px,
+      rgba(212, 165, 116, 0.015) 14px,
+      rgba(212, 165, 116, 0.015) 15px
+    );
+  pointer-events: none;
+}
+
+/* ── 画图设置按钮 · 熔光 ── */
+#rghx_draw_open_settings {
+  position: relative;
+}
+#rghx_draw_open_settings i {
+  filter: drop-shadow(0 0 4px rgba(232, 200, 138, 0.3));
+}
+
+/* ── 设置行 · 锻锤测光 ── */
+.forge-setting-row,
+.rghx-setting-row {
+  position: relative;
+}
+
+.forge-setting-row::before,
+.rghx-setting-row::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, #e8c88a 0%, #d4a574 50%, #a67c4a 100%);
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.forge-setting-row:hover::before,
+.rghx-setting-row:hover::before {
+  opacity: 1;
+}
+
+/* ── 抽屉展开区 · 锻台底光 ── */
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-content {
+  background-image:
+    radial-gradient(ellipse 50% 1px at 20% 50%, rgba(212, 165, 116, 0.04) 0%, transparent 100%),
+    radial-gradient(ellipse 50% 1px at 80% 50%, rgba(212, 165, 116, 0.04) 0%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/* ── 熔光按钮悬停脉冲 ── */
+.rghx-row-action::after,
+#rghx_draw_open_settings::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.rghx-row-action:hover::after,
+#rghx_draw_open_settings:hover::after {
+  opacity: 1;
+}
+
+/* ── 图片容器 · 锻铜辉光 ── */
+.xb-nd-img {
+  position: relative;
+}
+.xb-nd-img::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 14px;
+  border: 2px solid rgba(212, 165, 116, 0.08);
+  pointer-events: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.xb-nd-img:hover::after {
+  border-color: rgba(212, 165, 116, 0.18);
+  box-shadow: inset 0 0 24px rgba(212, 165, 116, 0.04);
+}
+
+/* ── 按钮黄铜流光 ── */
+.rghx-row-action:hover,
+#rghx_draw_open_settings:hover {
+  background-size: 200% 100%;
+  animation: brassShimmer 2.5s ease-in-out infinite;
+}
+
+/* ── 选择框聚焦 · 暖色光晕 ── */
+.rghx-compact-select:hover {
+  border-color: #c8a05e;
+  box-shadow: inset 0 1px 2px rgba(166, 124, 74, 0.05), 0 0 0 3px rgba(212, 165, 116, 0.12), 0 0 16px rgba(212, 165, 116, 0.05);
+}
+
+/* ── 标题熔光文字 ── */
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-header b {
+  text-shadow: 0 0 20px rgba(212, 165, 116, 0.3), 0 0 40px rgba(232, 200, 138, 0.1);
+}
+
+/* ── 展开图标悬浮 ── */
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) .inline-drawer-icon:hover {
+  opacity: 1;
+  color: #e8c88a;
+  text-shadow: 0 0 12px rgba(232, 200, 138, 0.5);
+}
+
+/* ── 分隔线锻纹 ── */
+.forge-divider {
+  text-shadow: 0 0 8px rgba(212, 165, 116, 0.15);
+}
+.forge-divider hr {
+  box-shadow: 0 0 8px rgba(212, 165, 116, 0.08);
+}
+
+/* ── 抽屉熔火辉光 ── */
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider) {
+  box-shadow: 0 4px 16px rgba(166, 124, 74, 0.1), inset 0 1.5px 0 rgba(255,255,255,0.8), 0 0 40px rgba(224, 90, 44, 0.04);
+}
+#extensions_settings2 .inline-drawer:has(#rghx_draw_provider):hover {
+  box-shadow: 0 6px 24px rgba(166, 124, 74, 0.16), inset 0 1.5px 0 rgba(255,255,255,0.85), 0 0 60px rgba(224, 90, 44, 0.08);
+}
