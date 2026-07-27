@@ -479,18 +479,12 @@ function normalizeImageTasks(images) {
 
     tasks.sort((a, b) => a.index - b.index);
 
-    let validTasks = tasks.filter(t => t.index > 0 && t.scene);
-
-    if (validTasks.length > 0) {
-        const last = validTasks[validTasks.length - 1];
-        // 仅在「最后一个任务根本没有 characters 字段」时才视为截断丢弃。
-        // 旧逻辑用 action 长度(>=5)作为判据，会把合法的短动作 / 已知角色任务误删，
-        // 导致单图生成 100% 触发「未解析到图片任务」。
-        if (!last.hasCharactersField) {
-            console.warn(`[LLM-Service] 丢弃疑似截断的任务 index=${last.index}`);
-            validTasks.pop();
-        }
-    }
+    // 有效判据：具备 index 且描述过 scene。
+    // 场景图（风景 / 室内 / 物件等）本就不需要 characters 字段，
+    // 因此绝不能因为缺少 characters 就丢弃任务——否则单张场景图会 100% 触发
+    // 「未解析到图片任务」(NO_IMAGE_TASKS)。截断保护已由第 536 行的
+    // 空结果重试 + shouldRetryScenePlan 兜底，无需在此按 characters 误删。
+    const validTasks = tasks.filter(t => t.index > 0 && t.scene);
 
     validTasks.forEach(t => delete t.hasCharactersField);
 
