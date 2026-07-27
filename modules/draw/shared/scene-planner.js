@@ -403,19 +403,38 @@ function parseYamlCharacters(rawCharacters) {
 
 function parseYamlImagePlan(text) {
     let root = null;
+
+    // 容错1：部分模型会直接输出 JSON（例如开启了结构化 / JSON 输出），先尝试 JSON
     try {
-        root = jsyaml.load(text);
-    } catch (error) {
-        const message = error?.message || 'YAML 格式无效';
-        throw new LLMServiceError(`YAML 解析失败: ${message}`, 'PARSE_ERROR', {
-            sample: text.slice(0, 300),
-            yamlError: message,
-        });
+        const json = JSON.parse(text);
+        if (json && (Array.isArray(json.images) || Array.isArray(json) || json.images)) {
+            root = json;
+        }
+    } catch {
+        // 不是 JSON，继续走 YAML 解析
     }
 
-    const rawImages = Array.isArray(root?.images)
-        ? root.images
-        : (Array.isArray(root) ? root : []);
+    if (!root) {
+        try {
+            root = jsyaml.load(text);
+        } catch (error) {
+            const message = error?.message || 'YAML 格式无效';
+            throw new LLMServiceError(`YAML 解析失败: ${message}`, 'PARSE_ERROR', {
+                sample: text.slice(0, 300),
+                yamlError: message,
+            });
+        }
+    }
+
+    let rawImages;
+    if (Array.isArray(root?.images)) {
+        rawImages = root.images;
+    } else if (root?.images && typeof root.images === 'object') {
+        // 容错2：images 被写成单个映射（漏掉列表 `-`）时，包裹成数组，避免整段被丢弃
+        rawImages = [root.images];
+    } else {
+        rawImages = Array.isArray(root) ? root : [];
+    }
     return rawImages.map((rawImage) => {
         const image = rawImage && typeof rawImage === 'object' ? rawImage : {};
         return {
@@ -464,19 +483,11 @@ function normalizeImageTasks(images) {
 
     if (validTasks.length > 0) {
         const last = validTasks[validTasks.length - 1];
-        let isComplete;
-
+        // 仅在「最后一个任务根本没有 characters 字段」时才视为截断丢弃。
+        // 旧逻辑用 action 长度(>=5)作为判据，会把合法的短动作 / 已知角色任务误删，
+        // 导致单图生成 100% 触发「未解析到图片任务」。
         if (!last.hasCharactersField) {
-            isComplete = false;
-        } else if (last.chars.length === 0) {
-            isComplete = true;
-        } else {
-            const lastChar = last.chars[last.chars.length - 1];
-            isComplete = (lastChar.action?.length || 0) >= 5;
-        }
-
-        if (!isComplete) {
-            console.warn(`[LLM-Service] 丢弃截断的任务 index=${last.index}`);
+            console.warn(`[LLM-Service] 丢弃疑似截断的任务 index=${last.index}`);
             validTasks.pop();
         }
     }
