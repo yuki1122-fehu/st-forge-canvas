@@ -806,14 +806,35 @@ function buildFailedPlaceholderHtml({ slotId, messageId, tags, positive, errorTy
 export async function renderPreviewsForMessage(messageId) {
     const ctx = getContext();
     const message = ctx.chat?.[messageId];
-    if (!message?.mes) return;
+    if (!message?.mes) {
+        // 如果 message.mes 不存在，尝试从 DOM 文本提取占位符
+        const mesTextEl = getMesTextElement(messageId);
+        if (!mesTextEl) return;
+        const domSlotIds = extractSlotIds(mesTextEl.textContent || '');
+        if (domSlotIds.size === 0) return;
+        return renderPreviewsForSlots(messageId, domSlotIds, mesTextEl);
+    }
 
     const slotIds = extractSlotIds(message.mes);
-    if (slotIds.size === 0) return;
+    // 如果 message.mes 中未找到占位符（可能已被 generate_interceptor 剥离），尝试从 DOM 文本提取
+    if (slotIds.size === 0) {
+        const mesTextEl = getMesTextElement(messageId);
+        if (mesTextEl) {
+            const domSlotIds = extractSlotIds(mesTextEl.textContent || '');
+            if (domSlotIds.size > 0) return renderPreviewsForSlots(messageId, domSlotIds, mesTextEl);
+        }
+        return;
+    }
 
     const mesTextEl = getMesTextElement(messageId);
     if (!mesTextEl) return;
 
+    return renderPreviewsForSlots(messageId, slotIds, mesTextEl);
+}
+
+/** 核心渲染逻辑：给定 slotIds，在 DOM 中查找并替换占位符（从 renderPreviewsForMessage 提取） */
+async function renderPreviewsForSlots(messageId, slotIds, mesTextEl) {
+    if (!messageId || !slotIds?.size || !mesTextEl) return;
     const replacements = [];
     for (const slotId of slotIds) {
         if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) continue;
@@ -911,6 +932,43 @@ export async function renderPreviewsForMessage(messageId) {
     }
 }
 
+/**
+ * 终极 DOM 占位符兜底清除：当所有结构化方法均失败时，直接扫描所有 mes_text 元素
+ * 的 innerHTML，对尚未渲染的占位符进行字符串替换。
+ * 在插件初始化、切换 Provider、以及每次常规渲染后调用。
+ */
+function cleanupAllDomPlaceholders() {
+    const ctx = getContext();
+    const chat = ctx.chat || [];
+    for (let i = 0; i < chat.length; i++) {
+        const mesTextEl = getMesTextElement(i);
+        if (!mesTextEl) continue;
+        const html = mesTextEl.innerHTML;
+        // 检查是否包含任何未渲染的占位符
+        if (!html.includes('[image:') && !html.includes('【image') && !html.includes('image：') && !html.includes('image:')) continue;
+        // 遍历现有已渲染图片，如果占位符还在，直接用 innerHTML 替换
+        const slotIds = extractSlotIds(chat[i]?.mes || '');
+        if (slotIds.size === 0) continue;
+        let newHtml = html;
+        let changed = false;
+        for (const slotId of slotIds) {
+            if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) {
+                // 已渲染，移除可能残留的占位符文本
+                const half = createPlaceholder(slotId);
+                const full = createDOMPlaceholder(slotId);
+                const r = new RegExp(escapeRegexChars(half) + '|' + escapeRegexChars(full), 'g');
+                if (r.test(newHtml)) {
+                    newHtml = newHtml.replace(r, '');
+                    changed = true;
+                }
+            }
+        }
+        if (changed) {
+            mesTextEl.innerHTML = newHtml;
+        }
+    }
+}
+
 function initDrawPreviewMessageObserver() {
     if (drawPreviewMessageObserver) return;
     drawPreviewMessageObserver = new IntersectionObserver((entries) => {
@@ -968,6 +1026,8 @@ export async function renderAllDrawPreviews() {
             observeMessageForDrawPreviewLazyRender(i);
         }
     }
+    // 所有常规渲染完成后，执行终极 DOM 占位符清除兜底
+    cleanupAllDomPlaceholders();
 }
 
 function clearPendingDrawPreviewTimers() {
@@ -1036,12 +1096,13 @@ export function stopSharedDrawPreviewRuntime() {
 // ── 定期占位符检查器 ──────────────────────────────────────────
 let placeholderWatcherInterval = null;
 let placeholderWatcherAttempts = 0;
-const PLACEHOLDER_WATCHER_MAX_ATTEMPTS = 30;
+const PLACEHOLDER_WATCHER_MAX_ATTEMPTS = 600;
 const PLACEHOLDER_WATCHER_INTERVAL = 2000;
 
 export function startPlaceholderWatcher() {
     if (placeholderWatcherInterval) return;
     placeholderWatcherAttempts = 0;
+    console.log('[DrawCommon] 占位符监控已启动（最大尝试次数: ' + PLACEHOLDER_WATCHER_MAX_ATTEMPTS + '，间隔: ' + PLACEHOLDER_WATCHER_INTERVAL + 'ms）');
     placeholderWatcherInterval = setInterval(() => {
         placeholderWatcherAttempts++;
         if (placeholderWatcherAttempts > PLACEHOLDER_WATCHER_MAX_ATTEMPTS) {
@@ -1059,9 +1120,11 @@ export function startPlaceholderWatcher() {
             DOM_PLACEHOLDER_REGEX.lastIndex = 0;
             const mesTextEl = getMesTextElement(i);
             if (!mesTextEl) continue;
-            if (mesTextEl.querySelector('.xb-nd-img')) continue;
             const textContent = mesTextEl.textContent || '';
-            if (!textContent.includes('[image:') && !textContent.includes('【image')) continue;
+            if (!textContent.includes('[image:') && !textContent.includes('【image')) {
+                // 没有未渲染的占位符文本
+                continue;
+            }
             hasUnrendered = true;
             renderPreviewsForMessage?.(i)?.catch?.(e => {
                 console.warn('[DrawCommon] 周期性渲染失败:', i, e);
@@ -1074,6 +1137,7 @@ export function startPlaceholderWatcher() {
 }
 
 export function stopPlaceholderWatcher() {
+    console.log('[DrawCommon] 占位符监控已停止');
     if (placeholderWatcherInterval) {
         clearInterval(placeholderWatcherInterval);
         placeholderWatcherInterval = null;

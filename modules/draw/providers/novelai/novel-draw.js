@@ -389,7 +389,14 @@ function isMessageBeingEdited(messageId) {
 
 function getMesTextElement(messageId) {
     if (!Number.isFinite(messageId)) return null;
-    return document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text`);
+    const primary = document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text`);
+    if (primary) return primary;
+    const fallback = document.querySelector(`.mes[mesid="${messageId}"] .mes_text`);
+    if (fallback) {
+        console.debug('[NovelDraw] getMesTextElement fallback (no #chat container) for mesid:', messageId);
+        return fallback;
+    }
+    return document.querySelector(`[mesid="${messageId}"] .mes_text`);
 }
 
 function createNodeFromHtml(html) {
@@ -2985,9 +2992,20 @@ async function generateAndInsertImages({ messageId, onStateChange, skipLock = fa
 
                   if (!inserted) {
                     requiresFinalDomSync = true;
-                    const formatted = messageFormatting(message.mes, message.name, message.is_system, message.is_user, messageId);
-                    $(`[mesid="${messageId}"] .mes_text`).html(formatted);
-                    await renderSharedPreviewsForMessage(messageId);
+                    try {
+                        const mf = typeof messageFormatting === 'function'
+                            ? messageFormatting
+                            : (window.messageFormatting || null);
+                        if (typeof mf === 'function') {
+                            const formatted = mf(message.mes, message.name, message.is_system, message.is_user, messageId);
+                            $(`[mesid="${messageId}"] .mes_text`).html(formatted);
+                            await renderSharedPreviewsForMessage(messageId);
+                        } else {
+                            console.warn('[NovelDraw] 增量渲染: messageFormatting 不可用');
+                        }
+                    } catch (e) {
+                        console.warn('[NovelDraw] 增量渲染 messageFormatting 失败:', e);
+                    }
 
                     // 直接追加兜底：确保图片至少能在消息末尾看到
                     const mesTextEl = document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text, .mes[mesid="${messageId}"] .mes_text`);
@@ -3045,14 +3063,25 @@ async function generateAndInsertImages({ messageId, onStateChange, skipLock = fa
             !isMessageBeingEdited(messageId);
 
         if (shouldUpdateDom && requiresFinalDomSync) {
-            const formatted = messageFormatting(
-                message.mes,
-                message.name,
-                message.is_system,
-                message.is_user,
-                messageId
-            );
-            $('[mesid="' + messageId + '"] .mes_text').html(formatted);
+            try {
+                const mf = typeof messageFormatting === 'function'
+                    ? messageFormatting
+                    : (window.messageFormatting || null);
+                if (typeof mf === 'function') {
+                    const formatted = mf(
+                        message.mes,
+                        message.name,
+                        message.is_system,
+                        message.is_user,
+                        messageId
+                    );
+                    $('[mesid="' + messageId + '"] .mes_text').html(formatted);
+                } else {
+                    console.warn('[NovelDraw] messageFormatting 不可用，跳过完整全文重渲染');
+                }
+            } catch (e) {
+                console.warn('[NovelDraw] 全文重渲染失败:', e);
+            }
 
             await renderSharedPreviewsForMessage(messageId);
 
@@ -3182,6 +3211,15 @@ async function autoGenerateForLastAI() {
         } catch {}
     } finally {
         autoBusy = false;
+        // ── 生图完成后强制触发预览渲染（无论成功/失败，确保已插入的占位符被渲染） ──
+        setTimeout(() => {
+            try {
+                renderAllDrawPreviews();
+                console.log('[NovelDraw] 自动生图完成，重新渲染预览');
+            } catch (e) {
+                console.warn('[NovelDraw] 渲染预览失败:', e);
+            }
+        }, 100);
     }
 }
 

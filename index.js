@@ -333,7 +333,19 @@ jQuery(async () => {
     function onMsgRender() { setTimeout(() => renderAllDrawPreviews(), 80); }
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMsgRender);
     eventSource.on(event_types.USER_MESSAGE_RENDERED, onMsgRender);
-    eventSource.on(event_types.GENERATION_ENDED, () => setTimeout(() => renderAllDrawPreviews(), 500));
+    eventSource.on(event_types.GENERATION_ENDED, () => {
+        // 首次尝试在生成结束后立即渲染（可能占位符还未插入）
+        setTimeout(() => renderAllDrawPreviews(), 500);
+        // 持续重试以覆盖自动生图尚未完成的场景
+        let retryCount = 0;
+        const retryTimer = setInterval(() => {
+            retryCount++;
+            renderAllDrawPreviews();
+            if (retryCount >= 20) {
+                clearInterval(retryTimer);
+            }
+        }, 2500);
+    });
     eventSource.on(event_types.MESSAGE_UPDATED, () => setTimeout(() => renderAllDrawPreviews(), 300));
     eventSource.on(event_types.MESSAGE_SWIPED, () => setTimeout(() => renderAllDrawPreviews(), 300));
     eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(() => renderAllDrawPreviews(), 200));
