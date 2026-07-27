@@ -188,6 +188,7 @@ let overlayCreated = false;
 let frameReady = false;
 let jsZipLoaded = false;
 let moduleInitialized = false;
+let _initNovelInProgress = false;
 let touchState = null;
 let settingsCache = null;
 let settingsLoaded = false;
@@ -2982,12 +2983,18 @@ async function generateAndInsertImages({ messageId, onStateChange, skipLock = fa
                         anchor: task.anchor,
                     });
 
-                    if (!inserted) {
-                        requiresFinalDomSync = true;
-                        const formatted = messageFormatting(message.mes, message.name, message.is_system, message.is_user, messageId);
-                        $(`[mesid="${messageId}"] .mes_text`).html(formatted);
-                        await renderSharedPreviewsForMessage(messageId);
+                  if (!inserted) {
+                    requiresFinalDomSync = true;
+                    const formatted = messageFormatting(message.mes, message.name, message.is_system, message.is_user, messageId);
+                    $(`[mesid="${messageId}"] .mes_text`).html(formatted);
+                    await renderSharedPreviewsForMessage(messageId);
+
+                    // 直接追加兜底：确保图片至少能在消息末尾看到
+                    const mesTextEl = document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text, .mes[mesid="${messageId}"] .mes_text`);
+                    if (mesTextEl && !mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) {
+                        mesTextEl.insertAdjacentHTML('beforeend', incrementalHtml);
                     }
+                   }
                 }
             } catch (e) {
                 requiresFinalDomSync = true;
@@ -3931,12 +3938,12 @@ export async function openNovelDrawSettings() {
 }
 
 export async function initNovelDraw() {
-    if (moduleInitialized) return;
+    if (moduleInitialized || _initNovelInProgress) return;
+    _initNovelInProgress = true;
 
     await loadPromptTemplates();
     await loadSettings();
     const sharedDrawSettings = await loadSharedDrawSettings();
-    moduleInitialized = true;
     initAfterAiGate();
     afterAiGateDispose?.();
     afterAiGateDispose = registerAfterAiHandler(MODULE_KEY, ({ chatId, messageId }) => {
@@ -4064,11 +4071,14 @@ export async function initNovelDraw() {
     };
 
     window.registerModuleCleanup?.(MODULE_KEY, cleanupNovelDraw);
+    moduleInitialized = true;
+    _initNovelInProgress = false;
     console.log('[NovelDraw] 模块已初始化');
 }
 
 export async function cleanupNovelDraw() {
     moduleInitialized = false;
+    _initNovelInProgress = false;
     settingsCache = null;
     settingsLoaded = false;
     events.cleanup();

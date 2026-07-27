@@ -895,10 +895,19 @@ export async function renderPreviewsForMessage(messageId) {
         });
     }
 
-    if (fallbackReplaced && !anchorInserted && !isMessageBeingEdited(messageId)) {
-        // Template-only UI markup built locally.
-        // eslint-disable-next-line no-unsanitized/property
-        mesTextEl.innerHTML = html;
+   if (fallbackReplaced && !anchorInserted && !isMessageBeingEdited(messageId)) {
+       // Template-only UI markup built locally.
+       // eslint-disable-next-line no-unsanitized/property
+       mesTextEl.innerHTML = html;
+   }
+
+    // ── 终末回退：所有结构化方法均失败时，直接追加到 mes_text 末尾 ──
+    if (!fallbackReplaced && !anchorInserted) {
+        for (const item of pendingFallback) {
+            if (!mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${item.slotId}"]`)) {
+                mesTextEl.insertAdjacentHTML('beforeend', item.html);
+            }
+        }
     }
 }
 
@@ -1048,7 +1057,7 @@ export function startPlaceholderWatcher() {
             if (!PLACEHOLDER_REGEX.test(mes) && !DOM_PLACEHOLDER_REGEX.test(mes)) continue;
             PLACEHOLDER_REGEX.lastIndex = 0;
             DOM_PLACEHOLDER_REGEX.lastIndex = 0;
-            const mesTextEl = document.querySelector(`.mes[mesid="${i}"] .mes_text`);
+            const mesTextEl = getMesTextElement(i);
             if (!mesTextEl) continue;
             if (mesTextEl.querySelector('.xb-nd-img')) continue;
             const textContent = mesTextEl.textContent || '';
