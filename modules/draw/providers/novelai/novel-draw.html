@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Novel Draw</title>
+<title>锻焰画匣 · NovelAI</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -14,17 +14,20 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-    --bg-primary: #0d1117;
-    --bg-secondary: #161b22;
-    --bg-tertiary: #21262d;
-    --bg-input: rgba(0, 0, 0, 0.25);
-    --text-primary: #e6edf3;
-    --text-secondary: #8b949e;
-    --text-muted: #484f58;
-    --border: rgba(255, 255, 255, 0.1);
-    --border-focus: rgba(212, 165, 116, 0.5);
+    --bg-primary: #16100d;
+    --bg-secondary: #1f1814;
+    --bg-tertiary: #2a211c;
+    --bg-input: rgba(0, 0, 0, 0.30);
+    --text-primary: #e8ddd2;
+    --text-secondary: #a89888;
+    --text-muted: #6a5d52;
+    --border: rgba(212, 165, 116, 0.12);
+    --border-focus: rgba(212, 165, 116, 0.55);
     --accent: #d4a574;
     --accent-soft: rgba(212, 165, 116, 0.15);
+    --accent-gradient: linear-gradient(135deg, #d4a574, #b8845a);
+    --brass-hi: #e8c88a;
+    --brass-low: #a67c4a;
     --success: #3fb950;
     --danger: #f85149;
     --warning: #d29922;
@@ -599,6 +602,105 @@ select.input { cursor: pointer; }
     color: var(--text-secondary); font-family: monospace; font-size: 11px; line-height: 1.45;
     white-space: pre-wrap; word-break: break-word;
 }
+
+/* ═══════════════════════════════════════════════
+   锻焰画匣 · Forge Theme Additions
+   ═══════════════════════════════════════════════ */
+/* Scrollbar - 黄铜圆角轨道 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 116, 0.25);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(212, 165, 116, 0.4); }
+
+/* 选择/输入框高亮 - 锻造黄铜发光 */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15), inset 0 1px 3px rgba(0,0,0,0.1) !important;
+  outline: none !important;
+}
+
+/* 按钮 - 黄铜锻造质感 */
+button:not(.header-close):not(.tab-btn):not(.close-btn):not(.flat-btn) {
+  border: none !important;
+  background: linear-gradient(165deg, #e8c88a 0%, #d4a574 45%, #a67c4a 100%) !important;
+  color: #fff !important;
+  border-radius: 7px !important;
+  cursor: pointer !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(80,60,40,0.2),
+    0 2px 5px rgba(166,124,74,0.25) !important;
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-weight: 500 !important;
+}
+button:not(.header-close):not(.tab-btn):not(.close-btn):not(.flat-btn):hover {
+  background: linear-gradient(165deg, #f0d49a 0%, #deb07e 45%, #b88a54 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(80,60,40,0.15),
+    0 4px 12px rgba(212,165,116,0.3) !important;
+  transform: translateY(-1px);
+}
+button:not(.header-close):not(.tab-btn):not(.close-btn):not(.flat-btn):active {
+  box-shadow: inset 0 2px 4px rgba(80,60,40,0.25) !important;
+  transform: translateY(0);
+}
+
+/* 锻锤纹输入框 - 嵌压质感 */
+input, select, textarea {
+  background: rgba(15, 10, 8, 0.5) !important;
+  border: 1px solid rgba(212, 165, 116, 0.15) !important;
+  color: var(--text-primary) !important;
+  border-radius: 7px !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(255,255,255,0.04) !important;
+}
+
+/* 黄铜色渐变工具类 */
+.brass-gradient {
+  background: linear-gradient(165deg, #e8c88a 0%, #d4a574 45%, #a67c4a 100%);
+}
+.brass-text {
+  background: linear-gradient(105deg, #a67c4a, #d4a574 55%, #e8c88a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 锻压面板 - 金属内凹感 */
+.forge-panel {
+  background: linear-gradient(160deg, rgba(30, 22, 18, 0.7), rgba(22, 16, 13, 0.85));
+  border: 1px solid rgba(212, 165, 116, 0.08);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.15),
+    0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* 熔火光泽动画 - 用于生成中状态 */
+@keyframes forge-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(212, 165, 116, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(212, 165, 116, 0.3); }
+}
+.forge-generating {
+  animation: forge-glow-pulse 1.6s ease-in-out infinite;
+}
+
+/* 毛玻璃卡片 */
+.forge-glass {
+  background: linear-gradient(160deg, rgba(42, 33, 28, 0.6), rgba(31, 24, 20, 0.4));
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+
 </style>
 </head>
 

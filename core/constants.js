@@ -3,7 +3,7 @@
  */
 
 export const EXT_ID = "LittleWhiteBox";
-export const EXT_NAME = "小白X";
+export const EXT_NAME = "锻焰画匣";
 export const EXT_FOLDER_ID = (() => {
     try {
         const url = new URL(import.meta.url);
