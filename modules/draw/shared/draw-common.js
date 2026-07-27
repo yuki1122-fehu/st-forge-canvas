@@ -1,16 +1,12 @@
+import { getContext } from "../../../../../../extensions.js";
 import {
-    startPlaceholderWatcher, stopPlaceholderWatcher, getContext } from "../../../../../../extensions.js";
-import {
-    startPlaceholderWatcher, stopPlaceholderWatcher,
     getDisplayPreviewForSlot,
     getPreviewsBySlot,
     getPreviewDisplayUrl,
     warmSlotPreviewNeighbors,
 } from "./gallery-cache.js";
-import {
-    startPlaceholderWatcher, stopPlaceholderWatcher, LLMServiceError } from "./scene-planner.js";
-import {
-    startPlaceholderWatcher, stopPlaceholderWatcher, createModuleEvents, event_types } from "../../../core/event-manager.js";
+import { LLMServiceError } from "./scene-planner.js";
+import { createModuleEvents, event_types } from "../../../core/event-manager.js";
 
 const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
 // Full-width variant: ST may convert [image:slot] to 【image：slot】 during formatting
@@ -1040,7 +1036,7 @@ export function startPlaceholderWatcher() {
             stopPlaceholderWatcher();
             return;
         }
-        const ctx = getContext();
+        const ctx = typeof getContext === 'function' ? getContext() : window?.getContext?.();
         const chat = ctx.chat || [];
         let hasUnrendered = false;
         for (let i = 0; i < chat.length; i++) {
@@ -1054,7 +1050,7 @@ export function startPlaceholderWatcher() {
             const textContent = mesTextEl.textContent || '';
             if (!textContent.includes('[image:') && !textContent.includes('【image')) continue;
             hasUnrendered = true;
-            renderPreviewsForMessage(i).catch(e => {
+            renderPreviewsForMessage?.(i)?.catch?.(e => {
                 console.warn('[DrawCommon] 周期性渲染失败:', i, e);
             });
         }
