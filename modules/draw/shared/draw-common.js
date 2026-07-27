@@ -4,6 +4,8 @@ import {
     getPreviewsBySlot,
     getPreviewDisplayUrl,
     warmSlotPreviewNeighbors,
+    getDrawSlotIdsForMessage,
+    getAllDrawSlotIdsByMessage,
 } from "./gallery-cache.js";
 import { LLMServiceError } from "./scene-planner.js";
 import { createModuleEvents, event_types } from "../../../core/event-manager.js";
@@ -521,6 +523,39 @@ export function getDrawSavedEntry(message, slotId) {
     return normalizeDrawSavedEntry(slotId, getSavedMap(message, LEGACY_NOVEL_SAVED_EXTRA_KEY)?.[slotId]);
 }
 
+/**
+ * 从 message.extra 中读取「已保存的画图 slot 映射」的 slotId 集合。
+ *
+ * 关键用途：generate_interceptor（manifest 声明的 rghxGenerateInterceptor，shouldStrip 恒为 true）
+ * 会在生成结束后把 [image:slot-XXX] 占位符从 message.mes 剥离，导致仅依赖 mes 文本的发现逻辑
+ * （extractSlotIds(chat[i]?.mes)）失效，内联图片在刷新/切换/重渲染后无法再被定位。
+ *
+ * LittleWhiteBox 之所以能稳定内联渲染，是因为它的前端渲染器（iframe-renderer.js / processMessageById）
+ * 直接读取 message.extra 中的 slot 映射来还原图片，而非依赖 mes 里残留的占位符文本。
+ * 此处复刻该能力：当 mes / DOM 中已无占位符时，回退到 message.extra 发现含图消息，
+ * 再借助已保存的 anchor 把图片插入到正确位置。
+ */
+export function getDrawSavedSlotIds(message) {
+    const ids = new Set();
+    if (!message || typeof message !== 'object') return ids;
+    const scan = (map) => {
+        if (!map || typeof map !== 'object') return;
+        for (const key of Object.keys(map)) {
+            if (key && typeof key === 'string' && /^[a-z0-9\-_]+$/i.test(key)) ids.add(key);
+        }
+    };
+    scan(getSavedMap(message, DRAW_SAVED_EXTRA_KEY));
+    scan(getSavedMap(message, LEGACY_NOVEL_SAVED_EXTRA_KEY));
+    return ids;
+}
+
+/** 判断某条消息是否含有已保存的画图 slot（mes 占位符或 message.extra 均可） */
+export function messageHasDrawSlots(message) {
+    if (!message) return false;
+    if (extractSlotIds(message.mes).size > 0) return true;
+    return getDrawSavedSlotIds(message).size > 0;
+}
+
 export async function setDrawSavedEntry(messageId, slotId, data) {
     const ctx = getContext();
     const message = ctx.chat?.[messageId];
@@ -823,6 +858,21 @@ export async function renderPreviewsForMessage(messageId) {
             const domSlotIds = extractSlotIds(mesTextEl.textContent || '');
             if (domSlotIds.size > 0) return renderPreviewsForSlots(messageId, domSlotIds, mesTextEl);
         }
+        // 回退 1：从 message.extra 的已保存 slot 映射发现（仅限已保存图片）。
+        const savedSlotIds = getDrawSavedSlotIds(message);
+        if (savedSlotIds.size > 0) {
+            const el = mesTextEl || getMesTextElement(messageId);
+            if (el) return renderPreviewsForSlots(messageId, savedSlotIds, el);
+        }
+        // 回退 2（最可靠）：直接按 messageId 反查 IndexedDB 画廊缓存，覆盖「仅预览、未保存」的图片。
+        // 这与 LittleWhiteBox 前端渲染器 processMessageById 的发现逻辑一致，且不依赖 mes 文本。
+        try {
+            const dbSlotIds = await getDrawSlotIdsForMessage(messageId);
+            if (dbSlotIds.size > 0) {
+                const el = mesTextEl || getMesTextElement(messageId);
+                if (el) return renderPreviewsForSlots(messageId, dbSlotIds, el);
+            }
+        } catch { /* 忽略，交给其它触发路径 */ }
         return;
     }
 
@@ -1016,8 +1066,20 @@ export async function renderAllDrawPreviews() {
     const chat = ctx.chat || [];
     let rendered = 0;
 
+    // 一次性按 messageId 反查 IndexedDB 画廊缓存，得到「消息 → slot 集合」映射。
+    // 这样即使 generate_interceptor 已把 [image:slot-XXX] 从 message.mes 剥离，
+    // 也能准确定位含图消息（覆盖「仅预览、未保存」的图片）。仅读取一次，避免逐条查询。
+    let slotByMessage = new Map();
+    try {
+        slotByMessage = await getAllDrawSlotIdsByMessage();
+    } catch { /* 忽略，退化为仅依赖 mes / extra */ }
+
     for (let i = chat.length - 1; i >= 0; i--) {
-        if (extractSlotIds(chat[i]?.mes).size === 0) continue;
+        const mid = String(i);
+        const hasMesPlaceholder = extractSlotIds(chat[i]?.mes).size > 0;
+        const hasSaved = getDrawSavedSlotIds(chat[i]).size > 0;
+        const hasDbSlots = (slotByMessage.get(mid)?.size || 0) > 0;
+        if (!hasMesPlaceholder && !hasSaved && !hasDbSlots) continue;
         const mesEl = document.querySelector(`.mes[mesid="${i}"]`);
         if (rendered < INITIAL_RENDER_MESSAGE_LIMIT || isMessageNearViewport(mesEl)) {
             await renderPreviewsForMessage(i);
@@ -1114,8 +1176,8 @@ export function startPlaceholderWatcher() {
         let hasUnrendered = false;
         for (let i = 0; i < chat.length; i++) {
             const mes = chat[i]?.mes;
-            if (!mes) continue;
-            if (!PLACEHOLDER_REGEX.test(mes) && !DOM_PLACEHOLDER_REGEX.test(mes)) continue;
+            if (!mes && getDrawSavedSlotIds(chat[i]).size === 0) continue;
+            if (mes && !PLACEHOLDER_REGEX.test(mes) && !DOM_PLACEHOLDER_REGEX.test(mes) && getDrawSavedSlotIds(chat[i]).size === 0) continue;
             PLACEHOLDER_REGEX.lastIndex = 0;
             DOM_PLACEHOLDER_REGEX.lastIndex = 0;
             const mesTextEl = getMesTextElement(i);

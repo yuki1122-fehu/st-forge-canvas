@@ -3085,10 +3085,11 @@ async function generateAndInsertImages({ messageId, onStateChange, skipLock = fa
 
             await renderSharedPreviewsForMessage(messageId);
 
-            try {
-                const { processMessageById } = await import('../../../iframe-renderer.js');
-                processMessageById(messageId, true);
-            } catch {}
+            // 注：原 LittleWhiteBox 在此调用 iframe-renderer 的 processMessageById 做最终全量重渲染。
+            // st-forge 是提取出的独立画图插件，未包含该前端渲染器（modules/iframe-renderer.js 不存在），
+            // 且其原生消息渲染即由 SillyTavern 负责。内联图片的还原改由 draw-common 的
+            // renderSharedPreviewsForMessage / renderAllDrawPreviews 完成（已改为从 message.extra
+            // 的已保存 slot 映射发现图片，规避 generate_interceptor 剥离 mes 占位符导致的失联）。
         } else if (shouldUpdateDom) {
             console.log('[NovelDraw] 已跳过最终 full rerender，仅后台保存正文与局部 DOM patch');
         }

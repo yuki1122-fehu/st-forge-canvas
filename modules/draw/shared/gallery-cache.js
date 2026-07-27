@@ -660,6 +660,79 @@ export async function getPreviewsBySlot(slotId) {
     });
 }
 
+/**
+ * 按 messageId 查询该消息下「所有含成功预览的 slotId」。
+ *
+ * 这是内联图片重渲染的关键发现手段：generate_interceptor 会在生成结束后把
+ * [image:slot-XXX] 占位符从 message.mes 剥离，且 message.extra 仅在图片被
+ * 保存到文件（有 savedUrl）时才会记录 slot。对于「仅预览、未保存」的图片，
+ * 只能从 IndexedDB（画廊缓存，自带 messageId 索引）反查。这里直接复用画廊的
+ * 同一数据源，与 processMessageById（LittleWhiteBox 前端渲染器）的发现逻辑一致。
+ */
+const drawSlotByMessageCache = new Map();
+const DRAW_SLOT_MSG_CACHE_TTL = 4000;
+
+export async function getDrawSlotIdsForMessage(messageId) {
+    const key = String(messageId);
+    const cached = drawSlotByMessageCache.get(key);
+    if (cached && Date.now() - cached.t < DRAW_SLOT_MSG_CACHE_TTL) return cached.ids;
+
+    const ids = new Set();
+    try {
+        const database = await openDB();
+        const tx = database.transaction(DB_STORE, 'readonly');
+        const store = tx.objectStore(DB_STORE);
+        const indexName = 'messageId';
+        const records = await new Promise((resolve, reject) => {
+            try {
+                if (store.indexNames.contains(indexName)) {
+                    const request = store.index(indexName).getAll(key);
+                    request.onsuccess = () => resolve(request.result || []);
+                    request.onerror = () => reject(request.error);
+                } else {
+                    const results = [];
+                    store.openCursor().onsuccess = (event) => {
+                        const cursor = event.target.result;
+                        if (!cursor) { resolve(results); return; }
+                        if (String(cursor.value?.messageId) === key) results.push(cursor.value);
+                        cursor.continue();
+                    };
+                    tx.onerror = () => reject(tx.error);
+                }
+            } catch (e) { reject(e); }
+        });
+        for (const rec of records) {
+            if (rec && rec.slotId && rec.status !== 'failed' && (rec.base64 || rec.savedUrl)) {
+                ids.add(rec.slotId);
+            }
+        }
+    } catch { /* 忽略查询失败，交给调用方兜底 */ }
+    drawSlotByMessageCache.set(key, { ids, t: Date.now() });
+    return ids;
+}
+
+/** 一次性取出全部消息的 slot 映射（用于全量渲染遍历，避免逐条查询） */
+export async function getAllDrawSlotIdsByMessage() {
+    const map = new Map();
+    try {
+        const database = await openDB();
+        const tx = database.transaction(DB_STORE, 'readonly');
+        const store = tx.objectStore(DB_STORE);
+        const records = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+        for (const rec of records) {
+            if (!rec || !rec.slotId || rec.status === 'failed' || !(rec.base64 || rec.savedUrl)) continue;
+            const mid = String(rec.messageId);
+            if (!map.has(mid)) map.set(mid, new Set());
+            map.get(mid).add(rec.slotId);
+        }
+    } catch { /* 忽略 */ }
+    return map;
+}
+
 export async function getDisplayPreviewForSlot(slotId) {
     const previews = await getPreviewsBySlot(slotId);
     if (!previews.length) return { preview: null, historyCount: 0, hasData: false, isFailed: false };
