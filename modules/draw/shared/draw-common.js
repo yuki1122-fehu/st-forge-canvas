@@ -461,8 +461,11 @@ export function extractSlotIds(mes) {
     const ids = new Set();
     if (!mes) return ids;
     let match;
-    const regex = new RegExp(PLACEHOLDER_REGEX.source, 'gi');
-    while ((match = regex.exec(mes)) !== null) ids.add(match[1]);
+    const halfRegex = new RegExp(PLACEHOLDER_REGEX.source, 'gi');
+    while ((match = halfRegex.exec(mes)) !== null) ids.add(match[1]);
+    // Also scan for full-width DOM placeholders: 【image：slot】
+    const domRegex = new RegExp(DOM_PLACEHOLDER_REGEX.source, 'gi');
+    while ((match = domRegex.exec(mes)) !== null) ids.add(match[1]);
     return ids;
 }
 
@@ -1042,8 +1045,9 @@ export function startPlaceholderWatcher() {
         for (let i = 0; i < chat.length; i++) {
             const mes = chat[i]?.mes;
             if (!mes) continue;
-            if (!PLACEHOLDER_REGEX.test(mes)) continue;
+            if (!PLACEHOLDER_REGEX.test(mes) && !DOM_PLACEHOLDER_REGEX.test(mes)) continue;
             PLACEHOLDER_REGEX.lastIndex = 0;
+            DOM_PLACEHOLDER_REGEX.lastIndex = 0;
             const mesTextEl = document.querySelector(`.mes[mesid="${i}"] .mes_text`);
             if (!mesTextEl) continue;
             if (mesTextEl.querySelector('.xb-nd-img')) continue;

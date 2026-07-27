@@ -71,6 +71,7 @@ const CONFIG_VERSION = 5;
 const MAX_SEED = 0xFFFFFFFF;
 const API_TEST_TIMEOUT = 15000;
 const PLACEHOLDER_REGEX = /\[image:([a-z0-9\-_]+)\]/gi;
+const DOM_PLACEHOLDER_REGEX = /[[【]\s*image\s*[：:]\s*([a-z0-9\-_]+)\s*[]】]/gi;
 
 // ── 消息文本过滤 ──────────────────────────────────────────────────
 const DEFAULT_MESSAGE_FILTER_RULES = [
@@ -298,6 +299,9 @@ function syncOverlayFrameLayout() {
 
 function createPlaceholder(slotId) { return `[image:${slotId}]`; }
 
+/** Full-width placeholder for DOM matching (ST may convert brackets during formatting) */
+function createDOMPlaceholder(slotId) { return `【image：${slotId}】`; }
+
 async function persistChatSilently() {
     const ctx = getContext();
     if (!ctx?.saveChat) return;
@@ -320,8 +324,11 @@ function extractSlotIds(mes) {
     const ids = new Set();
     if (!mes) return ids;
     let match;
-    const regex = new RegExp(PLACEHOLDER_REGEX.source, 'gi');
-    while ((match = regex.exec(mes)) !== null) ids.add(match[1]);
+    const halfRegex = new RegExp(PLACEHOLDER_REGEX.source, 'gi');
+    while ((match = halfRegex.exec(mes)) !== null) ids.add(match[1]);
+    // Also scan for full-width DOM placeholders: 【image：slot】
+    const domRegex = new RegExp(DOM_PLACEHOLDER_REGEX.source, 'gi');
+    while ((match = domRegex.exec(mes)) !== null) ids.add(match[1]);
     return ids;
 }
 
@@ -432,7 +439,11 @@ function replacePlaceholdersInDomBatch(root, replacements) {
     );
     if (pending.length === 0) return new Set();
 
-    const placeholderMap = new Map(pending.map(item => [createPlaceholder(item.slotId), item]));
+    const placeholderMap = new Map();
+    pending.forEach(item => {
+        placeholderMap.set(createPlaceholder(item.slotId), item);
+        placeholderMap.set(createDOMPlaceholder(item.slotId), item);
+    });
     const placeholderRegex = new RegExp(
         Array.from(placeholderMap.keys()).map(escapeRegexChars).join('|'),
         'g'
