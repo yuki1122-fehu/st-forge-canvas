@@ -1126,6 +1126,56 @@ export async function renderAllDrawPreviews() {
     cleanupAllDomPlaceholders();
 }
 
+/** 强制全量渲染：扫描所有消息，不设数量限制，适合手动触发 */
+export async function forceRenderAllDrawPreviews() {
+    const ctx = getContext();
+    const chat = ctx.chat || [];
+    let rendered = 0;
+
+    let slotByMessage = new Map();
+    try {
+        slotByMessage = await getAllDrawSlotIdsByMessage();
+    } catch { /* 忽略 */ }
+
+    // 先处理可见区域的消息，再处理其余
+    const visibleIds = [];
+    const hiddenIds = [];
+    for (let i = chat.length - 1; i >= 0; i--) {
+        const mid = String(i);
+        const hasMesPlaceholder = extractSlotIds(chat[i]?.mes).size > 0;
+        const hasSaved = getDrawSavedSlotIds(chat[i]).size > 0;
+        const hasDbSlots = (slotByMessage.get(mid)?.size || 0) > 0;
+        if (!hasMesPlaceholder && !hasSaved && !hasDbSlots) continue;
+
+        const mesEl = document.querySelector(`.mes[mesid="${i}"]`);
+        const knownSlots = hasDbSlots ? slotByMessage.get(mid) : null;
+
+        if (isMessageNearViewport(mesEl)) {
+            visibleIds.push({ id: i, knownSlots });
+        } else {
+            hiddenIds.push({ id: i, knownSlots });
+        }
+    }
+
+    // 先渲染可见的，再处理不可见的（防止浏览器过于繁忙）
+    for (const { id, knownSlots } of visibleIds) {
+        try {
+            await renderPreviewsForMessage(id, knownSlots && knownSlots.size ? knownSlots : null);
+            rendered++;
+        } catch { /* continue */ }
+    }
+
+    for (const { id, knownSlots } of hiddenIds) {
+        try {
+            await renderPreviewsForMessage(id, knownSlots && knownSlots.size ? knownSlots : null);
+            rendered++;
+        } catch { /* continue */ }
+    }
+
+    cleanupAllDomPlaceholders();
+    return rendered;
+}
+
 function clearPendingDrawPreviewTimers() {
     for (const timer of drawPreviewPendingTimers) {
         clearTimeout(timer);

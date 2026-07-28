@@ -16,6 +16,7 @@ import {
     startSharedDrawPreviewRuntime, stopSharedDrawPreviewRuntime,
     renderAllDrawPreviews, insertPreviewIntoRenderedMessage,
     ensureDrawImageStyles, startDrawPreviewDomObserver,
+    forceRenderAllDrawPreviews,
 } from "./modules/draw/shared/draw-common.js";
 
 extension_settings[EXT_ID] = extension_settings[EXT_ID] || {};
@@ -356,9 +357,61 @@ jQuery(async () => {
     startDrawPreviewDomObserver();
     // 加载时无条件先跑一次全量渲染（持久化消息 / 历史消息尤其需要）
     setTimeout(() => renderAllDrawPreviews(), 200);
+
+    // 浮动力渲染按钮
+    createForceRenderButton();
 });
 
+function createForceRenderButton() {
+    if (document.getElementById('rghx-force-render-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'rghx-force-render-btn';
+    btn.title = '强制渲染所有图片占位符';
+    btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+    Object.assign(btn.style, {
+        position: 'fixed',
+        bottom: '80px',
+        right: '16px',
+        zIndex: '9999',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        border: '1px solid var(--SmartThemeBorderColor, #444)',
+        background: 'var(--SmartThemeBlurTintColor, rgba(0,0,0,0.6))',
+        color: 'var(--SmartThemeBodyColor, #ccc)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '16px',
+        transition: 'opacity 0.2s',
+        opacity: '0.6',
+    });
+    btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; });
+    btn.addEventListener('mouseleave', () => { btn.style.opacity = '0.6'; });
+    btn.addEventListener('click', async () => {
+        btn.style.opacity = '1';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        try {
+            const count = await forceRenderAllDrawPreviews();
+            if (typeof toastr !== 'undefined') {
+                toastr.success(`已重新渲染 ${count || 0} 条消息的图片`);
+            }
+        } catch (e) {
+            console.error('[熔光画匣] 强制渲染失败:', e);
+            if (typeof toastr !== 'undefined') {
+                toastr.error('强制渲染失败，请查看控制台');
+            }
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+            btn.style.opacity = '0.6';
+        }
+    });
+    document.body.appendChild(btn);
+}
+
 window.renderAllDrawPreviews = renderAllDrawPreviews;
+window.forceRenderAllDrawPreviews = forceRenderAllDrawPreviews;
 window.insertPreviewIntoRenderedMessage = insertPreviewIntoRenderedMessage;
 
 export { normalizeDrawProvider, initActiveDrawProvider, cleanupDrawProvider };
