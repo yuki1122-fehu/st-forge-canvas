@@ -838,7 +838,7 @@ function buildFailedPlaceholderHtml({ slotId, messageId, tags, positive, errorTy
 </div>`;
 }
 
-export async function renderPreviewsForMessage(messageId) {
+export async function renderPreviewsForMessage(messageId, knownSlotIds = null) {
     const ctx = getContext();
     const message = ctx.chat?.[messageId];
     if (!message?.mes) {
@@ -850,7 +850,11 @@ export async function renderPreviewsForMessage(messageId) {
         return renderPreviewsForSlots(messageId, domSlotIds, mesTextEl);
     }
 
-    const slotIds = extractSlotIds(message.mes);
+    // 优先使用调用方已知的 slot 集合（如 renderAllDrawPreviews 已从 IndexedDB 反查得到），
+    // 避免再次走 getDrawSlotIdsForMessage 的 messageId 索引查询，规避类型不匹配等偶发失败。
+    const slotIds = (knownSlotIds && knownSlotIds.size > 0)
+        ? new Set(knownSlotIds)
+        : extractSlotIds(message.mes);
     // 如果 message.mes 中未找到占位符（可能已被 generate_interceptor 剥离），尝试从 DOM 文本提取
     if (slotIds.size === 0) {
         const mesTextEl = getMesTextElement(messageId);
@@ -1087,8 +1091,9 @@ export async function renderAllDrawPreviews() {
         const hasDbSlots = (slotByMessage.get(mid)?.size || 0) > 0;
         if (!hasMesPlaceholder && !hasSaved && !hasDbSlots) continue;
         const mesEl = document.querySelector(`.mes[mesid="${i}"]`);
+        const knownSlots = hasDbSlots ? slotByMessage.get(mid) : null;
         if (rendered < INITIAL_RENDER_MESSAGE_LIMIT || isMessageNearViewport(mesEl)) {
-            await renderPreviewsForMessage(i);
+            await renderPreviewsForMessage(i, knownSlots && knownSlots.size ? knownSlots : null);
             rendered++;
         } else {
             observeMessageForDrawPreviewLazyRender(i);

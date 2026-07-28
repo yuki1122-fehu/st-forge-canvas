@@ -538,7 +538,9 @@ export async function storePreview(opts) {
             tx.objectStore(DB_STORE).put({
                 imgId,
                 slotId: resolvedSlotId,
-                messageId,
+                // 归一化为字符串：IndexedDB 键类型严格，数字 5 与字符串 "5" 不匹配。
+                // 统一存字符串可保证 getDrawSlotIdsForMessage 用 getAll(String(id)) 稳定命中。
+                messageId: String(messageId),
                 chatId: resolvedChatId,
                 characterName: resolvedCharacterName,
                 source,
@@ -683,18 +685,35 @@ export async function getDrawSlotIdsForMessage(messageId) {
         const tx = database.transaction(DB_STORE, 'readonly');
         const store = tx.objectStore(DB_STORE);
         const indexName = 'messageId';
+        // IndexedDB 键类型严格：库中 messageId 可能是数字 5，而 key 是字符串 "5"，
+        // getAll("5") 无法命中数字键。因此同时按字符串与（若可解析）数字两种形式查询，
+        // 兼容历史数据（旧版本 storePreview 直接存数字）与新数据（已归一化为字符串）。
+        const candidateKeys = [key];
+        if (/^\d+$/.test(key)) candidateKeys.push(Number(key));
         const records = await new Promise((resolve, reject) => {
             try {
                 if (store.indexNames.contains(indexName)) {
-                    const request = store.index(indexName).getAll(key);
-                    request.onsuccess = () => resolve(request.result || []);
-                    request.onerror = () => reject(request.error);
+                    const idx = store.index(indexName);
+                    const collected = [];
+                    let pending = candidateKeys.length;
+                    let settled = false;
+                    const finish = () => { if (!settled && --pending === 0) { settled = true; resolve(collected); } };
+                    candidateKeys.forEach((k) => {
+                        const request = idx.getAll(k);
+                        request.onsuccess = () => {
+                            if (Array.isArray(request.result)) collected.push(...request.result);
+                            finish();
+                        };
+                        request.onerror = () => {
+                            if (!settled) { settled = true; reject(request.error); }
+                        };
+                    });
                 } else {
                     const results = [];
                     store.openCursor().onsuccess = (event) => {
                         const cursor = event.target.result;
                         if (!cursor) { resolve(results); return; }
-                        if (String(cursor.value?.messageId) === key) results.push(cursor.value);
+                        if (candidateKeys.some(k => cursor.value?.messageId === k)) results.push(cursor.value);
                         cursor.continue();
                     };
                     tx.onerror = () => reject(tx.error);
