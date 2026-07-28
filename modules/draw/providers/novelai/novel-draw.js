@@ -3062,36 +3062,36 @@ async function generateAndInsertImages({ messageId, onStateChange, skipLock = fa
             finalCtx.chat?.[messageId] === message &&
             !isMessageBeingEdited(messageId);
 
-        if (shouldUpdateDom && requiresFinalDomSync) {
-            try {
-                const mf = typeof messageFormatting === 'function'
-                    ? messageFormatting
-                    : (window.messageFormatting || null);
-                if (typeof mf === 'function') {
-                    const formatted = mf(
-                        message.mes,
-                        message.name,
-                        message.is_system,
-                        message.is_user,
-                        messageId
-                    );
-                    $('[mesid="' + messageId + '"] .mes_text').html(formatted);
-                } else {
-                    console.warn('[NovelDraw] messageFormatting 不可用，跳过完整全文重渲染');
+        if (shouldUpdateDom) {
+            if (requiresFinalDomSync) {
+                try {
+                    const mf = typeof messageFormatting === 'function'
+                        ? messageFormatting
+                        : (window.messageFormatting || null);
+                    if (typeof mf === 'function') {
+                        const formatted = mf(
+                            message.mes,
+                            message.name,
+                            message.is_system,
+                            message.is_user,
+                            messageId
+                        );
+                        $('[mesid="' + messageId + '"] .mes_text').html(formatted);
+                    } else {
+                        console.warn('[NovelDraw] messageFormatting 不可用，跳过完整全文重渲染');
+                    }
+                } catch (e) {
+                    console.warn('[NovelDraw] 全文重渲染失败:', e);
                 }
-            } catch (e) {
-                console.warn('[NovelDraw] 全文重渲染失败:', e);
             }
-
+            // 关键修复：无论增量注入是否成功，都在生成末尾「无条件」触发一次确定性渲染。
+            // 原 LittleWhiteBox 即在生成结束时无条件调用 processMessageById(messageId, true) 做最终全量重渲染；
+            // 旧实现把该调用门控在 requiresFinalDomSync（仅增量失败时才触发），
+            // 导致增量成功时完全依赖 GENERATION_ENDED / CHARACTER_MESSAGE_RENDERED 事件 + 2s×600 轮询
+            // 的脆弱链路。SillyTavern 后续 messageFormatting 重渲染会把已注入的 <xb-nd-img> 擦除、
+            // 还原为 [image:slot] 文本，若事件/轮询时序错过，占位符便残留为文本（时好时坏）。
+            // 此处对齐 LWB：每次生成末尾都强制还原一次，规避竞态。
             await renderSharedPreviewsForMessage(messageId);
-
-            // 注：原 LittleWhiteBox 在此调用 iframe-renderer 的 processMessageById 做最终全量重渲染。
-            // st-forge 是提取出的独立画图插件，未包含该前端渲染器（modules/iframe-renderer.js 不存在），
-            // 且其原生消息渲染即由 SillyTavern 负责。内联图片的还原改由 draw-common 的
-            // renderSharedPreviewsForMessage / renderAllDrawPreviews 完成（已改为从 message.extra
-            // 的已保存 slot 映射发现图片，规避 generate_interceptor 剥离 mes 占位符导致的失联）。
-        } else if (shouldUpdateDom) {
-            console.log('[NovelDraw] 已跳过最终 full rerender，仅后台保存正文与局部 DOM patch');
         }
 
         const resultColor = successCount === tasks.length ? '#3ecf8e' : '#f0b429';
