@@ -884,7 +884,13 @@ export async function renderPreviewsForMessage(messageId) {
 
 /** 核心渲染逻辑：给定 slotIds，在 DOM 中查找并替换占位符（从 renderPreviewsForMessage 提取） */
 async function renderPreviewsForSlots(messageId, slotIds, mesTextEl) {
-    if (!messageId || !slotIds?.size || !mesTextEl) return;
+    // 注意：messageId 可能为 0（第一条消息），不能用 !messageId 判断
+    if (messageId === undefined || messageId === null || !slotIds?.size || !mesTextEl) return;
+    // 关键修复：本函数从 renderPreviewsForMessage 提取时遗漏了 message 变量定义，
+    // 导致下方 resolveRenderPreviewForSlot(message, ...) 抛出 ReferenceError
+    // （"message is not defined"），每个 slot 的渲染都进入 catch 分支，
+    // [image:slot-XXX] 占位符因此永远无法被替换成图片。
+    const message = getContext().chat?.[messageId] || null;
     const replacements = [];
     for (const slotId of slotIds) {
         if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) continue;
