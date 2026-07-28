@@ -360,38 +360,164 @@ jQuery(async () => {
 
     // 浮动力渲染按钮
     createForceRenderButton();
+    // 设定面板内也放一个按钮（备选入口）
+    setTimeout(() => injectForceRenderToSettings(), 800);
 });
+
+// ---- 强制渲染按钮 ----
+
+const FRB_POS_KEY = 'rghx_frb_pos';
+
+function getFrbSavedPos() {
+    try {
+        const raw = localStorage.getItem(FRB_POS_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    return { right: 20, bottom: 140 };
+}
+
+function saveFrbPos(right, bottom) {
+    try { localStorage.setItem(FRB_POS_KEY, JSON.stringify({ right, bottom })); } catch {}
+}
 
 function createForceRenderButton() {
     if (document.getElementById('rghx-force-render-btn')) return;
-    const btn = document.createElement('button');
+
+    const pos = getFrbSavedPos();
+    const btn = document.createElement('div');
     btn.id = 'rghx-force-render-btn';
     btn.title = '强制渲染所有图片占位符';
-    btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
-    Object.assign(btn.style, {
-        position: 'fixed',
-        bottom: '80px',
-        right: '16px',
-        zIndex: '9999',
-        width: '36px',
-        height: '36px',
-        borderRadius: '50%',
-        border: '1px solid var(--SmartThemeBorderColor, #444)',
-        background: 'var(--SmartThemeBlurTintColor, rgba(0,0,0,0.6))',
-        color: 'var(--SmartThemeBodyColor, #ccc)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '16px',
-        transition: 'opacity 0.2s',
-        opacity: '0.6',
+    btn.textContent = '🔄';
+    btn.style.setProperty('position', 'fixed', 'important');
+    btn.style.setProperty('right', `${pos.right}px`, 'important');
+    btn.style.setProperty('bottom', `${pos.bottom}px`, 'important');
+    btn.style.setProperty('zIndex', '99999', 'important');
+    btn.style.setProperty('width', '44px', 'important');
+    btn.style.setProperty('height', '44px', 'important');
+    btn.style.setProperty('borderRadius', '22px', 'important');
+    btn.style.setProperty('border', '1.5px solid rgba(255,255,255,0.18)', 'important');
+    btn.style.setProperty('background', 'rgba(20,20,28,0.92)', 'important');
+    btn.style.setProperty('color', 'rgba(255,255,255,0.9)', 'important');
+    btn.style.setProperty('cursor', 'grab', 'important');
+    btn.style.setProperty('display', 'flex', 'important');
+    btn.style.setProperty('alignItems', 'center', 'important');
+    btn.style.setProperty('justifyContent', 'center', 'important');
+    btn.style.setProperty('fontSize', '20px', 'important');
+    btn.style.setProperty('lineHeight', '1', 'important');
+    btn.style.setProperty('boxShadow', '0 4px 18px rgba(0,0,0,0.45)', 'important');
+    btn.style.setProperty('backdropFilter', 'blur(18px)', 'important');
+    btn.style.setProperty('WebkitBackdropFilter', 'blur(18px)', 'important');
+    btn.style.setProperty('userSelect', 'none', 'important');
+    btn.style.setProperty('touchAction', 'none', 'important');
+    btn.style.setProperty('transition', 'background 0.2s, border-color 0.2s, transform 0.15s', 'important');
+    btn.style.setProperty('willChange', 'transform', 'important');
+
+    let drag = null;
+
+    btn.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        drag = {
+            sx: e.clientX, sy: e.clientY,
+            sr: parseInt(btn.style.right, 10) || 20,
+            sb: parseInt(btn.style.bottom, 10) || 140,
+            moved: false,
+        };
+        btn.setPointerCapture(e.pointerId);
+        btn.style.setProperty('cursor', 'grabbing', 'important');
+        e.preventDefault();
     });
-    btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; });
-    btn.addEventListener('mouseleave', () => { btn.style.opacity = '0.6'; });
+
+    window.addEventListener('pointermove', (e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.sx;
+        const dy = e.clientY - drag.sy;
+        if (!drag.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) drag.moved = true;
+        if (drag.moved) {
+            const nr = Math.max(8, drag.sr - dx);
+            const nb = Math.max(8, drag.sb - dy);
+            btn.style.setProperty('right', `${nr}px`, 'important');
+            btn.style.setProperty('bottom', `${nb}px`, 'important');
+        }
+    }, { passive: false });
+
+    btn.addEventListener('pointerup', (e) => {
+        if (!drag) return;
+        btn.releasePointerCapture(e.pointerId);
+        btn.style.setProperty('cursor', 'grab', 'important');
+        if (!drag.moved) {
+            void handleForceRenderClick(btn);
+        } else {
+            saveFrbPos(
+                parseInt(btn.style.right, 10) || 20,
+                parseInt(btn.style.bottom, 10) || 140,
+            );
+        }
+        drag = null;
+    });
+
+    btn.addEventListener('pointercancel', (e) => {
+        if (!drag) return;
+        btn.releasePointerCapture(e.pointerId);
+        btn.style.setProperty('cursor', 'grab', 'important');
+        drag = null;
+    });
+
+    btn.addEventListener('mouseenter', () => {
+        btn.style.setProperty('background', 'rgba(30,30,38,0.95)', 'important');
+        btn.style.setProperty('border-color', 'rgba(255,255,255,0.3)', 'important');
+    });
+    btn.addEventListener('mouseleave', () => {
+        btn.style.setProperty('background', 'rgba(20,20,28,0.92)', 'important');
+        btn.style.setProperty('border-color', 'rgba(255,255,255,0.18)', 'important');
+    });
+
+    document.body.appendChild(btn);
+}
+
+async function handleForceRenderClick(btn) {
+    btn.textContent = '⏳';
+    btn.style.setProperty('transform', 'scale(0.9)', 'important');
+    try {
+        const count = await forceRenderAllDrawPreviews();
+        btn.style.setProperty('transform', 'scale(1.05)', 'important');
+        btn.style.setProperty('border-color', 'rgba(62,207,142,0.7)', 'important');
+        if (typeof toastr !== 'undefined') {
+            toastr.success(`已重新渲染 ${count || 0} 条消息的图片`);
+        }
+    } catch (e) {
+        console.error('[熔光画匣] 强制渲染失败:', e);
+        btn.style.setProperty('border-color', 'rgba(248,113,113,0.7)', 'important');
+        if (typeof toastr !== 'undefined') {
+            toastr.error('强制渲染失败，请查看控制台');
+        }
+    } finally {
+        setTimeout(() => {
+            btn.textContent = '🔄';
+            btn.style.setProperty('transform', 'scale(1)', 'important');
+            btn.style.setProperty('border-color', 'rgba(255,255,255,0.18)', 'important');
+        }, 600);
+    }
+}
+
+function injectForceRenderToSettings() {
+    const row = document.querySelector('.rghx-setting-row.rghx-select-row');
+    if (!row) return;
+    if (row.querySelector('#rghx-force-render-inline')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'rghx-force-render-inline';
+    btn.title = '重新扫描并渲染所有消息中的图片占位符';
+    btn.textContent = '🔄 强制重绘';
+    Object.assign(btn.style, {
+        marginLeft: '8px',
+        padding: '4px 12px',
+        fontSize: '12px',
+        cursor: 'pointer',
+    });
+    btn.className = 'menu_button';
     btn.addEventListener('click', async () => {
-        btn.style.opacity = '1';
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.textContent = '⏳ 执行中…';
+        btn.disabled = true;
         try {
             const count = await forceRenderAllDrawPreviews();
             if (typeof toastr !== 'undefined') {
@@ -403,11 +529,11 @@ function createForceRenderButton() {
                 toastr.error('强制渲染失败，请查看控制台');
             }
         } finally {
-            btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
-            btn.style.opacity = '0.6';
+            btn.textContent = '🔄 强制重绘';
+            btn.disabled = false;
         }
     });
-    document.body.appendChild(btn);
+    row.appendChild(btn);
 }
 
 window.renderAllDrawPreviews = renderAllDrawPreviews;
