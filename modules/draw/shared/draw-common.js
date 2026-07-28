@@ -672,13 +672,20 @@ function replacePlaceholdersInDomBatch(root, replacements) {
     );
     if (pending.length === 0) return new Set();
 
-    // Map both half-width and full-width placeholders to the same patch
-    const placeholderMap = new Map();
-    pending.forEach(item => {
-        placeholderMap.set(createPlaceholder(item.slotId), item);
-        placeholderMap.set(createDOMPlaceholder(item.slotId), item);
+    // Build a flexible regex that matches all bracket/colon/whitespace variants.
+    // ST's markdown formatter may convert [image:slotId] into mixed forms like
+    // 【image:slotId】 (full-width brackets, half-width colon), so we cannot use
+    // exact placeholder strings. The capture group extracts the slotId directly.
+    const itemBySlotId = new Map();
+    const escapedSlotIds = pending.map(item => {
+        itemBySlotId.set(item.slotId, item);
+        return escapeRegexChars(item.slotId);
     });
-    const placeholderRegex = new RegExp(Array.from(placeholderMap.keys()).map(escapeRegexChars).join('|'), 'g');
+    const slotIdAlt = escapedSlotIds.join('|');
+    const placeholderRegex = new RegExp(
+        `[[【]\\s*image\\s*[：:]\\s*(${slotIdAlt})\\s*[]】]`,
+        'gi'
+    );
     const resolvedSlotIds = new Set();
     const nodePlans = new Map();
     const groupedByContainer = new Map();
@@ -698,7 +705,7 @@ function replacePlaceholdersInDomBatch(root, replacements) {
         placeholderRegex.lastIndex = 0;
         let match;
         while ((match = placeholderRegex.exec(value))) {
-            const patch = placeholderMap.get(match[0]);
+            const patch = itemBySlotId.get(match[1]);
             if (!patch || resolvedSlotIds.has(patch.slotId)) continue;
             const container = findTopLevelFlowContainer(root, textNode) || root;
             if (!groupedByContainer.has(container)) {
@@ -976,12 +983,11 @@ async function renderPreviewsForSlots(messageId, slotIds, mesTextEl) {
     let html = mesTextEl.innerHTML;
     let fallbackReplaced = false;
     for (const item of pendingFallback) {
-        const placeholder = createPlaceholder(item.slotId);
-        const domPlaceholder = createDOMPlaceholder(item.slotId);
-        const escapedPlaceholder = placeholder.replace(/[[\]]/g, '\\$&');
-        const escapedDomPlaceholder = escapeRegexChars(domPlaceholder);
-        if (!new RegExp(`${escapedPlaceholder}|${escapedDomPlaceholder}`).test(html)) continue;
-        html = html.replace(new RegExp(`${escapedPlaceholder}|${escapedDomPlaceholder}`, 'g'), item.html);
+        const esc = escapeRegexChars(item.slotId);
+        const flexiblePattern = `[[【]\\s*image\\s*[：:]\\s*${esc}\\s*[]】]`;
+        const regex = new RegExp(flexiblePattern, 'gi');
+        if (!regex.test(html)) continue;
+        html = html.replace(regex, item.html);
         fallbackReplaced = true;
     }
 
@@ -1032,9 +1038,8 @@ function cleanupAllDomPlaceholders() {
         for (const slotId of slotIds) {
             if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) {
                 // 已渲染，移除可能残留的占位符文本
-                const half = createPlaceholder(slotId);
-                const full = createDOMPlaceholder(slotId);
-                const r = new RegExp(escapeRegexChars(half) + '|' + escapeRegexChars(full), 'g');
+                const esc = escapeRegexChars(slotId);
+                const r = new RegExp(`[[【]\\s*image\\s*[：:]\\s*${esc}\\s*[]】]`, 'gi');
                 if (r.test(newHtml)) {
                     newHtml = newHtml.replace(r, '');
                     changed = true;
