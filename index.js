@@ -15,7 +15,7 @@ import {
     startPlaceholderWatcher, stopPlaceholderWatcher,
     startSharedDrawPreviewRuntime, stopSharedDrawPreviewRuntime,
     renderAllDrawPreviews, insertPreviewIntoRenderedMessage,
-    ensureDrawImageStyles,
+    ensureDrawImageStyles, startDrawPreviewDomObserver,
 } from "./modules/draw/shared/draw-common.js";
 
 extension_settings[EXT_ID] = extension_settings[EXT_ID] || {};
@@ -349,6 +349,13 @@ jQuery(async () => {
     eventSource.on(event_types.MESSAGE_UPDATED, () => setTimeout(() => renderAllDrawPreviews(), 300));
     eventSource.on(event_types.MESSAGE_SWIPED, () => setTimeout(() => renderAllDrawPreviews(), 300));
     eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(() => renderAllDrawPreviews(), 200));
+
+    // 自愈观察器：独立于画图后端，始终启用。
+    // 覆盖「SillyTavern 重渲染冲刷注入 DOM」「虚拟化消息尚未挂载」「事件未触发」
+    // 等导致正文残留裸 [image:slot-X] 的场景。
+    startDrawPreviewDomObserver();
+    // 加载时无条件先跑一次全量渲染（持久化消息 / 历史消息尤其需要）
+    setTimeout(() => renderAllDrawPreviews(), 200);
 });
 
 window.renderAllDrawPreviews = renderAllDrawPreviews;

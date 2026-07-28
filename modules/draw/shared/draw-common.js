@@ -434,14 +434,32 @@ ${menuHtml}
 
 function getMesTextElement(messageId) {
     if (!Number.isFinite(messageId)) return null;
-    const primary = document.querySelector(`#chat .mes[mesid="${messageId}"] .mes_text`);
-    if (primary) return primary;
-    const fallback = document.querySelector(`.mes[mesid="${messageId}"] .mes_text`);
-    if (fallback) {
-        console.debug('[DrawCommon] getMesTextElement fallback (no #chat container) for mesid:', messageId);
-        return fallback;
+    const idStr = String(messageId);
+    const selectors = [
+        `#chat .mes[mesid="${idStr}"] .mes_text`,
+        `.mes[mesid="${idStr}"] .mes_text`,
+        `[mesid="${idStr}"] .mes_text`,
+        // 部分主题/版本下文本容器类名不同，作为兜底
+        `#chat .mes[mesid="${idStr}"] .text`,
+        `.mes[mesid="${idStr}"] .text`,
+    ];
+    for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el) return el;
     }
-    return document.querySelector(`[mesid="${messageId}"] .mes_text`);
+    // 终极兜底：遍历所有 .mes，按 mesid 匹配（容忍字符串/数字差异），再取内部文本容器
+    const mesEls = document.querySelectorAll('.mes');
+    for (const mesEl of mesEls) {
+        const attr = mesEl.getAttribute('mesid');
+        if (attr === idStr || Number(attr) === messageId) {
+            const t = mesEl.querySelector('.mes_text') || mesEl.querySelector('.text') || mesEl;
+            if (t) {
+                console.debug('[DrawCommon] getMesTextElement 兜底遍历命中 mesid:', messageId);
+                return t;
+            }
+        }
+    }
+    return null;
 }
 
 function isMessageBeingEdited(messageId) {
@@ -1164,6 +1182,97 @@ export function stopSharedDrawPreviewRuntime() {
     drawPreviewRuntimeGeneration++;
     clearPendingDrawPreviewTimers();
     cleanupDrawPreviewMessageObserver();
+}
+
+// ── DOM 自愈观察器 ────────────────────────────────────────────
+// 关键修复：SillyTavern 经常会在消息渲染完成后、或用户滚动/切换/刷新视图时，
+// 重新构建某条消息的 .mes_text DOM（从 message.mes 重跑格式化），这会把我方
+// 注入的 <div class="xb-nd-img"> 整块冲掉，于是正文又变回裸 [image:slot-X]。
+// 仅依赖 MESSAGE_RENDERED 一次性注入无法覆盖这种「重渲染冲刷」与「虚拟化未挂载」场景。
+// 这里用 MutationObserver 监视 #chat，只要某条消息的 .mes_text 里又出现了尚未渲染的
+// 占位符，就重新渲染该消息。对首次渲染、重渲染冲刷、懒挂载均自愈。
+// 该观察器不依赖任何画图后端（provider），应当随插件无条件启用。
+let drawPreviewDomObserver = null;
+const drawPreviewDomScanCooldown = new Map(); // messageId -> 上次扫描时间戳
+const DRAW_PREVIEW_DOM_COOLDOWN_MS = 400;
+
+function collectUnrenderedMessageIds(root) {
+    const ids = new Set();
+    if (!root) return ids;
+    const mesEls = root.matches?.('.mes')
+        ? [root]
+        : (root.querySelectorAll ? root.querySelectorAll('.mes[mesid]') : []);
+    for (const mesEl of mesEls) {
+        const id = parseInt(mesEl.getAttribute('mesid'), 10);
+        if (Number.isNaN(id)) continue;
+        const textEl = mesEl.querySelector('.mes_text') || mesEl.querySelector('.text');
+        if (!textEl) continue;
+        const text = textEl.textContent || '';
+        if (!text.includes('[image:') && !text.includes('【image')) continue;
+        // 仅当存在尚未渲染为图片的 slot 时才需要重渲染
+        let need = false;
+        for (const sid of extractSlotIds(text)) {
+            if (!textEl.querySelector(`.xb-nd-img[data-slot-id="${sid}"]`)) {
+                need = true;
+                break;
+            }
+        }
+        if (need) ids.add(id);
+    }
+    return ids;
+}
+
+export function startDrawPreviewDomObserver() {
+    if (drawPreviewDomObserver) return;
+    const setup = () => {
+        const chatEl = document.getElementById('chat');
+        if (!chatEl) {
+            setTimeout(setup, 500);
+            return;
+        }
+        let scheduled = false;
+        const scheduleScan = () => {
+            if (scheduled) return;
+            scheduled = true;
+            // 用 macrotask 合并同帧内的多次 mutation，避免抖动/性能问题
+            setTimeout(() => {
+                scheduled = false;
+                const now = Date.now();
+                const ids = collectUnrenderedMessageIds(chatEl);
+                ids.forEach((id) => {
+                    if (Number.isNaN(id)) return;
+                    const last = drawPreviewDomScanCooldown.get(id) || 0;
+                    if (now - last < DRAW_PREVIEW_DOM_COOLDOWN_MS) return;
+                    drawPreviewDomScanCooldown.set(id, now);
+                    setTimeout(() => {
+                        if (document.getElementById('chat') !== chatEl) return; // 聊天已切换/卸载
+                        void renderPreviewsForMessage(id);
+                    }, 60);
+                });
+            }, 0);
+        };
+        drawPreviewDomObserver = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if ((m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length))
+                    || m.type === 'characterData') {
+                    scheduleScan();
+                    break;
+                }
+            }
+        });
+        drawPreviewDomObserver.observe(chatEl, { childList: true, subtree: true, characterData: true });
+        // 初次扫描（覆盖插件加载前已存在、且尚未渲染的历史消息）
+        scheduleScan();
+    };
+    setup();
+}
+
+function stopDrawPreviewDomObserver() {
+    if (drawPreviewDomObserver) {
+        drawPreviewDomObserver.disconnect();
+        drawPreviewDomObserver = null;
+    }
+    drawPreviewDomScanCooldown.clear();
 }
 
 // ── 定期占位符检查器 ──────────────────────────────────────────
