@@ -58,6 +58,10 @@ import {
     stopSharedDrawPreviewRuntime,
     renderAllDrawPreviews,
     renderPreviewsForMessage as renderSharedPreviewsForMessage,
+    PLACEHOLDER_REGEX,
+    DOM_PLACEHOLDER_REGEX,
+    DEFAULT_MESSAGE_FILTER_RULES,
+    applyMessageFilterRules,
 } from '../../shared/draw-common.js';
 // ═══════════════════════════════════════════════════════════════════════════
 // 常量
@@ -70,43 +74,6 @@ const NOVELAI_IMAGE_API = 'https://image.novelai.net/ai/generate-image';
 const CONFIG_VERSION = 5;
 const MAX_SEED = 0xFFFFFFFF;
 const API_TEST_TIMEOUT = 15000;
-const PLACEHOLDER_REGEX = /\[image:([a-z0-9\-_]+)\]/gi;
-const DOM_PLACEHOLDER_REGEX = /[[【]\s*image\s*[：:]\s*([a-z0-9\-_]+)\s*[]】]/gi;
-
-// ── 消息文本过滤 ──────────────────────────────────────────────────
-const DEFAULT_MESSAGE_FILTER_RULES = [
-    { start: '<think>',    end: '</think>' },
-    { start: '<thinking>', end: '</thinking>' },
-    { start: '<system>',   end: '</system>' },
-    { start: '<meta>',     end: '</meta>' },
-    { start: '<options>',  end: '</options>' },
-    { start: '<WorldState>', end: '</WorldState>' },
-    { start: '<state>',    end: '</state>' },
-    { start: '<UpdateVariable>', end: '</UpdateVariable>' },
-    { start: '<—',         end: '—>' },
-    { start: '',           end: '</think>' },   // 孤立闭合标签：从开头到 </think>
-];
-
-function applyMessageFilterRules(text, rules) {
-    if (!Array.isArray(rules) || !rules.length) return text;
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    let result = String(text);
-    for (const { start, end } of rules) {
-        const s = (start || '').trim(), e = (end || '').trim();
-        if (!s && !e) continue;
-        if (s && e) {
-            result = result.replace(new RegExp(esc(s) + '[\\s\\S]*?' + esc(e), 'gi'), '');
-        } else if (s) {
-            const idx = result.toLowerCase().indexOf(s.toLowerCase());
-            if (idx >= 0) result = result.slice(0, idx);
-        } else {
-            const idx = result.toLowerCase().indexOf(e.toLowerCase());
-            if (idx >= 0) result = result.slice(idx + e.length);
-        }
-    }
-    return result.trim();
-}
-
 const events = createModuleEvents(MODULE_KEY);
 
 const ImageState = { PREVIEW: 'preview', SAVING: 'saving', SAVED: 'saved', REFRESHING: 'refreshing', FAILED: 'failed' };

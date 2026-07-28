@@ -10,9 +10,9 @@ import {
 import { LLMServiceError } from "./scene-planner.js";
 import { createModuleEvents, event_types } from "../../../core/event-manager.js";
 
-const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
+export const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
 // Full-width variant: ST may convert [image:slot] to 【image：slot】 during formatting
-const DOM_PLACEHOLDER_REGEX = /[[【]\s*image\s*[：:]\s*([a-z0-9\-_]+)\s*[]】]/gi;
+export const DOM_PLACEHOLDER_REGEX = /[[【]\s*image\s*[：:]\s*([a-z0-9\-_]+)\s*[]】]/gi;
 
 const DRAW_IMAGE_HTML_REGEX = /<div\b[^>]*class=(["'])[^"']*\bxb-nd-img\b[^"']*\1[^>]*>[\s\S]*?<\/div>/gi;
 const DRAW_SAVED_EXTRA_KEY = 'rghxDrawSaved';
