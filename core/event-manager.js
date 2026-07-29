@@ -239,3 +239,4 @@ if (typeof window !== "undefined") {
 }
 
 export { event_types };
+export { eventSource };

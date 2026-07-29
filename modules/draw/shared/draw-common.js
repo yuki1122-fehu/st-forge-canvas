@@ -8,7 +8,7 @@ import {
     getAllDrawSlotIdsByMessage,
 } from "./gallery-cache.js";
 import { LLMServiceError } from "./scene-planner.js";
-import { createModuleEvents, event_types } from "../../../core/event-manager.js";
+import { createModuleEvents, event_types, eventSource } from "../../../core/event-manager.js";
 
 export const PLACEHOLDER_REGEX = /\[image\s*:\s*([a-z0-9\-_]+)\]/gi;
 // Full-width variant: ST may convert [image:slot] to 【image：slot】 during formatting
@@ -806,16 +806,16 @@ export function insertPreviewIntoRenderedMessage({ messageId, slotId, html, anch
     if (!mesTextEl || !slotId || !html) return false;
     const insertedSlotIds = replacePlaceholdersInDomBatch(mesTextEl, [{ slotId, html, anchor }]);
     if (insertedSlotIds.has(slotId)) {
-        try { getContext().eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
         return true;
     }
     if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) {
-        try { getContext().eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
         return true;
     }
     const result = insertPreviewByAnchor(mesTextEl, slotId, anchor, html);
     if (result) {
-        try { getContext().eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
     }
     return result;
 }
@@ -1026,7 +1026,7 @@ async function renderPreviewsForSlots(messageId, slotIds, mesTextEl) {
     }
 
     // 通知其他插件（如 JS-Slash-Runner）DOM 已更新，需要重新渲染
-    try { getContext().eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+    try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
 }
 
 /**
