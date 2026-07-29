@@ -1,4 +1,5 @@
 import { getContext } from "../../../../../../extensions.js";
+import { eventSource } from "../../../../../../script.js";
 import {
     getDisplayPreviewForSlot,
     getPreviewsBySlot,
@@ -805,9 +806,19 @@ export function insertPreviewIntoRenderedMessage({ messageId, slotId, html, anch
     const mesTextEl = getMesTextElement(messageId);
     if (!mesTextEl || !slotId || !html) return false;
     const insertedSlotIds = replacePlaceholdersInDomBatch(mesTextEl, [{ slotId, html, anchor }]);
-    if (insertedSlotIds.has(slotId)) return true;
-    if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) return true;
-    return insertPreviewByAnchor(mesTextEl, slotId, anchor, html);
+    if (insertedSlotIds.has(slotId)) {
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+        return true;
+    }
+    if (mesTextEl.querySelector(`.xb-nd-img[data-slot-id="${slotId}"]`)) {
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+        return true;
+    }
+    const result = insertPreviewByAnchor(mesTextEl, slotId, anchor, html);
+    if (result) {
+        try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
+    }
+    return result;
 }
 
 async function resolveRenderPreviewForSlot(message, messageId, slotId) {
@@ -1014,6 +1025,9 @@ async function renderPreviewsForSlots(messageId, slotIds, mesTextEl) {
             }
         }
     }
+
+    // 通知其他插件（如 JS-Slash-Runner）DOM 已更新，需要重新渲染
+    try { eventSource.emit(event_types.MESSAGE_EDITED, messageId); } catch (e) {}
 }
 
 /**
